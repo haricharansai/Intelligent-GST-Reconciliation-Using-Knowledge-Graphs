@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Intelligent GST Reconciliation Engine</title>
+
+<style>
+:root{
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --border:#e2e8f0;
+  --blue:#2563eb;
+  --orange:#f97316;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  color:var(--text);
+  background: linear-gradient(135deg,#eef2ff 0%, #f8fafc 50%, #fff7ed 100%);
+  min-height:100vh;
+  display:flex;
+}
+
+/* FULL WIDTH LAYOUT */
+.wrap{
+  display:grid;
+  grid-template-columns: 60% 40%;
+  width:100%;
+  min-height:100vh;
+}
+
+/* LEFT SIDE */
+.hero{
+  padding:60px 70px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.logo{
+  width:52px;
+  height:52px;
+  border-radius:14px;
+  background: linear-gradient(135deg,var(--blue),var(--orange));
+}
+
+.brand h1{
+  margin:0;
+  font-size:22px;
+}
+
+.brand p{
+  margin:4px 0 0;
+  font-size:14px;
+  color:var(--muted);
+}
+
+.hero h2{
+  margin:40px 0 14px;
+  font-size:36px;
+  font-weight:900;
+}
+
+.hero .desc{
+  font-size:16px;
+  color:var(--muted);
+  max-width:650px;
+  line-height:1.6;
+}
+
+.features{
+  margin-top:40px;
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:20px;
+}
+
+.feature{
+  background:#fff;
+  padding:18px;
+  border-radius:14px;
+  border:1px solid var(--border);
+}
+
+.feature .t{
+  font-weight:800;
+  margin-bottom:6px;
+}
+
+.feature .d{
+  font-size:14px;
+  color:var(--muted);
+}
+
+/* RIGHT SIDE */
+.panel{
+  background:#ffffff;
+  border-left:1px solid var(--border);
+  padding:60px 50px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.panel h3{
+  font-size:22px;
+  margin:0 0 10px;
+}
+
+.small{
+  color:var(--muted);
+  margin-bottom:30px;
+}
+
+.choice{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.btn{
+  padding:16px;
+  border-radius:14px;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+  text-decoration:none;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.btn-primary{
+  background:var(--blue);
+  color:white;
+}
+
+.btn-primary:hover{
+  background:#1d4ed8;
+}
+
+.btn-ghost{
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--text);
+}
+
+.btn-ghost:hover{
+  background:#f1f5f9;
+}
+
+.divider{
+  margin:25px 0 15px;
+  font-size:14px;
+  color:var(--muted);
+}
+
+.roleBox{
+  font-size:14px;
+  color:var(--muted);
+  line-height:1.8;
+}
+
+/* RESPONSIVE */
+@media(max-width:1000px){
+  .wrap{
+    grid-template-columns:1fr;
+  }
+  .panel{
+    border-left:none;
+    border-top:1px solid var(--border);
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+  <!-- LEFT SIDE -->
+  <section class="hero">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>Intelligent GST Reconciliation Engine</h1>
+        <p>Government-style dashboard • Reconciliation • Vendor Risk</p>
+      </div>
+    </div>
+
+    <h2>Detect mismatches. Classify risk. Prevent ITC leakage.</h2>
+
+    <p class="desc">
+      Upload GSTR data, run reconciliation, analyze mismatches, 
+      and identify high-risk vendors in one intelligent dashboard.
+    </p>
+
+    <div class="features">
+      <div class="feature">
+        <div class="t">📤 Smart Upload</div>
+        <div class="d">GSTR-1, 2B, 3B validation with schema checking.</div>
+      </div>
+      <div class="feature">
+        <div class="t">🔍 Auto Reconciliation</div>
+        <div class="d">Invoice matching with anomaly detection.</div>
+      </div>
+      <div class="feature">
+        <div class="t">⚠ Risk Engine</div>
+        <div class="d">Low / Medium / High ITC risk classification.</div>
+      </div>
+      <div class="feature">
+        <div class="t">📊 Audit Reports</div>
+        <div class="d">Export investigation-ready reports instantly.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT SIDE -->
+  <aside class="panel">
+    <h3>Get Started</h3>
+    <div class="small">Choose how you want to continue</div>
+
+    <div class="choice">
+      <a href="login.html" class="btn btn-primary">
+        Login <span>→</span>
+      </a>
+
+      <a href="register.html" class="btn btn-ghost">
+        Create Account <span>→</span>
+      </a>
+    </div>
+
+    <div class="divider">Supported Roles</div>
+
+    <div class="roleBox">
+      ✅ Business / Taxpayer<br>
+      ✅ CA / Tax Consultant<br>
+      ✅ Government Officer
+    </div>
+  </aside>
+
+</div>
+
+</body>
+</html>

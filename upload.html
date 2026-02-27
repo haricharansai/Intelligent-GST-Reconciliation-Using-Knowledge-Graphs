@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GST Data Upload - GST Reconciliation Engine</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --blue:#2563eb;
+      --orange:#f97316;
+      --green:#16a34a;
+      --red:#dc2626;
+      --shadow: 0 10px 30px rgba(2, 6, 23, .08);
+      --radius: 14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    /* Layout */
+    .app{ min-height:100vh; display:flex; }
+    aside{
+      width: 270px;
+      background: #0b1220;
+      color: #e5e7eb;
+      padding: 18px 14px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      border-right: 1px solid rgba(255,255,255,.06);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px 16px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .logo{
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--blue), var(--orange));
+    }
+    .brand h1{ margin:0; font-size:14px; line-height:1.1; font-weight:900; }
+    .brand p{ margin:4px 0 0; font-size:12px; color: rgba(229,231,235,.75); }
+
+    nav{ margin-top: 10px; }
+    .nav-item{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      color: rgba(229,231,235,.9);
+      text-decoration:none;
+      font-size: 14px;
+      margin-bottom: 6px;
+      border: 1px solid transparent;
+      transition: .15s;
+    }
+    .nav-item:hover{ background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08); }
+    .nav-item.active{ background: rgba(37,99,235,.20); border-color: rgba(37,99,235,.45); }
+    .dot{ width: 10px; height: 10px; border-radius: 999px; background: rgba(255,255,255,.35); }
+    .nav-item.active .dot{ background: var(--blue); }
+
+    /* Workflow steps */
+    .wf{
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .wf h3{
+      margin:0 10px 10px;
+      font-size: 12px;
+      color: rgba(229,231,235,.75);
+      letter-spacing: .4px;
+      text-transform: uppercase;
+    }
+    .step{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap:10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(229,231,235,.9);
+      font-size: 13px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .step.locked{
+      opacity: .55;
+      cursor: not-allowed;
+    }
+    .step.active{
+      border-color: rgba(37,99,235,.55);
+      background: rgba(37,99,235,.18);
+    }
+    .badge{
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      color: rgba(229,231,235,.85);
+      white-space: nowrap;
+    }
+    .badge.done{ border-color: rgba(22,163,74,.35); background: rgba(22,163,74,.12); }
+    .badge.next{ border-color: rgba(249,115,22,.35); background: rgba(249,115,22,.12); }
+    .badge.lock{ border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.06); }
+
+    main{ flex:1; padding: 22px 22px 60px; }
+
+    /* Topbar */
+    .topbar{
+      display:flex;
+      align-items:flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .title h2{ margin:0; font-size: 20px; }
+    .title .sub{ margin:6px 0 0; color: var(--muted); font-size: 13px; }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .col-8{ grid-column: span 8; }
+    .col-4{ grid-column: span 4; }
+    .col-12{ grid-column: span 12; }
+    @media (max-width: 980px){
+      aside{ width: 230px; }
+      .col-8, .col-4{ grid-column: span 12; }
+      main{ padding: 18px 14px 60px; }
+    }
+
+    /* Upload rows */
+    .uploadList{ display:flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+    .uploadRow{
+      display:grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+    }
+    @media (max-width: 720px){
+      .uploadRow{ grid-template-columns: 1fr; }
+    }
+    .rowTitle{
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .rowTitle h3{ margin:0; font-size: 14px; }
+    .rowTitle p{
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .pill{
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .pill.req{ border-color: rgba(220,38,38,.30); background: rgba(220,38,38,.08); color:#991b1b; }
+    .pill.opt{ border-color: rgba(22,163,74,.25); background: rgba(22,163,74,.08); color:#166534; }
+    .pill.auto{ border-color: rgba(37,99,235,.35); background: rgba(37,99,235,.10); color:#1d4ed8; }
+
+    .field{ display:flex; flex-direction:column; gap:6px; }
+    label{ font-size: 13px; color: var(--muted); }
+    input[type="file"], input[type="text"]{
+      width:100%;
+      padding: 10px 12px;
+      border:1px solid var(--border);
+      border-radius: 12px;
+      outline: none;
+      background:#fff;
+      color: var(--text);
+      font-size: 14px;
+    }
+    input:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+    }
+
+    .status{
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .chip{
+      display:inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background:#f8fafc;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .chip.ok{ border-color: rgba(22,163,74,.35); background: rgba(22,163,74,.08); color:#166534; }
+    .chip.bad{ border-color: rgba(220,38,38,.35); background: rgba(220,38,38,.08); color:#991b1b; }
+    .chip.auto{ border-color: rgba(37,99,235,.35); background: rgba(37,99,235,.10); color:#1d4ed8; }
+
+    .actions{
+      display:flex;
+      justify-content: space-between;
+      align-items:center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border);
+    }
+    .btn{
+      border:0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 900;
+      cursor:pointer;
+      font-size: 14px;
+    }
+    .btn-primary{ background: var(--blue); color:#fff; }
+    .btn-primary:hover{ filter: brightness(.95); }
+    .btn-ghost{
+      background:#fff;
+      border:1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-ghost:hover{ background:#f8fafc; }
+
+    /* Right panel */
+    .summary h3{ margin:0 0 8px; font-size: 14px; }
+    .summary p{ margin:0 0 10px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .rule{
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fff;
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    ul{ margin: 8px 0 0 18px; padding:0; }
+    .note{
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>GST Reconciliation</h1>
+          <p>Workflow Demo</p>
+        </div>
+      </div>
+
+      <!-- You can replace these hrefs later with real pages -->
+      <nav>
+        <a class="nav-item active" href="upload.html"><span class="dot"></span> Upload Data</a>
+        <a class="nav-item" href="parse.html"><span class="dot"></span> Parsing & Cleaning</a>
+        <a class="nav-item" href="graph.html"><span class="dot"></span> Knowledge Graph</a>
+        <a class="nav-item" href="recon.html"><span class="dot"></span> Invoice Matching</a>
+        <a class="nav-item" href="mismatch.html"><span class="dot"></span> Mismatch Detection</a>
+        <a class="nav-item" href="risk.html"><span class="dot"></span> Risk / AI</a>
+        <a class="nav-item" href="reports.html"><span class="dot"></span> Reports</a>
+      </nav>
+
+      <!-- Workflow stepper -->
+      <div class="wf">
+        <h3>Workflow</h3>
+
+        <div class="step active" id="s1">
+          <span>1. Upload GST Data</span>
+          <span class="badge next">CURRENT</span>
+        </div>
+
+        <div class="step locked" id="s2" title="Complete upload first">
+          <span>2. Parse & Clean</span>
+          <span class="badge lock">LOCKED</span>
+        </div>
+
+        <div class="step locked" id="s3" title="Complete parsing first">
+          <span>3. Knowledge Graph</span>
+          <span class="badge lock">LOCKED</span>
+        </div>
+
+        <div class="step locked" id="s4" title="Complete graph first">
+          <span>4. Reconcile</span>
+          <span class="badge lock">LOCKED</span>
+        </div>
+
+        <div class="step locked" id="s5" title="Complete recon first">
+          <span>5. Mismatches</span>
+          <span class="badge lock">LOCKED</span>
+        </div>
+
+        <div class="step locked" id="s6" title="Complete mismatch first">
+          <span>6. Risk / AI</span>
+          <span class="badge lock">LOCKED</span>
+        </div>
+
+        <div class="step locked" id="s7" title="Complete risk first">
+          <span>7. Reports</span>
+          <span class="badge lock">LOCKED</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main>
+      <div class="topbar">
+        <div class="title">
+          <h2>GST Data Upload</h2>
+          <div class="sub">Upload GSTR-1, GSTR-3B, and optional files. GSTR-2B will auto-fill after GSTR-1.</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- Upload form -->
+        <section class="card col-8">
+          <form id="uploadForm" action="#" method="post" enctype="multipart/form-data">
+            <div class="uploadList">
+              <!-- GSTR-1 -->
+              <div class="uploadRow">
+                <div>
+                  <div class="rowTitle">
+                    <div>
+                      <h3>GSTR-1 (Sales)</h3>
+                      <p>Required. Used to generate/validate related purchase ITC view for reconciliation demo.</p>
+                    </div>
+                    <span class="pill req">Required</span>
+                  </div>
+                  <div class="status" id="st-gstr1"><span class="chip">No file selected</span></div>
+                </div>
+                <div class="field">
+                  <label for="gstr1">Upload file</label>
+                  <input id="gstr1" name="gstr1" type="file" accept=".csv,.xlsx,.xls,.json" required />
+                </div>
+              </div>
+
+              <!-- GSTR-2B AUTO -->
+              <div class="uploadRow">
+                <div>
+                  <div class="rowTitle">
+                    <div>
+                      <h3>GSTR-2B (Purchase)</h3>
+                      <p>Auto-filled (demo). Backend will generate it after GSTR-1 upload.</p>
+                    </div>
+                    <span class="pill auto">Auto</span>
+                  </div>
+                  <div class="status" id="st-gstr2b">
+                    <span class="chip auto">Waiting for GSTR-1 upload</span>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="gstr2bAuto">Auto status</label>
+                  <input id="gstr2bAuto" name="gstr2bAuto" type="text" value="Not generated yet" readonly />
+                </div>
+              </div>
+
+              <!-- GSTR-3B -->
+              <div class="uploadRow">
+                <div>
+                  <div class="rowTitle">
+                    <div>
+                      <h3>GSTR-3B (Summary)</h3>
+                      <p>Required. Used for ITC claimed summary checks.</p>
+                    </div>
+                    <span class="pill req">Required</span>
+                  </div>
+                  <div class="status" id="st-gstr3b"><span class="chip">No file selected</span></div>
+                </div>
+                <div class="field">
+                  <label for="gstr3b">Upload file</label>
+                  <input id="gstr3b" name="gstr3b" type="file" accept=".csv,.xlsx,.xls,.json" required />
+                </div>
+              </div>
+
+              <!-- Invoice Excel/JSON -->
+              <div class="uploadRow">
+                <div>
+                  <div class="rowTitle">
+                    <div>
+                      <h3>Invoice Register (Excel / JSON)</h3>
+                      <p>Optional but recommended for demo. Helps show matching vs internal purchase register.</p>
+                    </div>
+                    <span class="pill opt">Optional</span>
+                  </div>
+                  <div class="status" id="st-inv"><span class="chip">No file selected</span></div>
+                </div>
+                <div class="field">
+                  <label for="invoice">Upload file</label>
+                  <input id="invoice" name="invoice" type="file" accept=".csv,.xlsx,.xls,.json" />
+                </div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button type="reset" class="btn btn-ghost">Clear</button>
+              <button type="submit" class="btn btn-primary">Validate & Continue</button>
+            </div>
+
+            <div class="note">
+              After successful upload + validation, the next step <b>Parse & Clean</b> will unlock automatically.
+            </div>
+          </form>
+        </section>
+
+        <!-- Validation panel -->
+        <aside class="card col-4 summary">
+          <h3>System validation</h3>
+          <p>Frontend does basic format checks. Backend should validate schema/columns and store parsed data.</p>
+
+          <div class="rule">
+            <b>Allowed formats:</b>
+            <ul>
+              <li>CSV (.csv)</li>
+              <li>Excel (.xlsx / .xls)</li>
+              <li>JSON (.json)</li>
+            </ul>
+          </div>
+
+          <div class="rule">
+            <b>Schema check (example):</b>
+            <ul>
+              <li>GSTIN, Invoice No, Invoice Date</li>
+              <li>Taxable Value, IGST/CGST/SGST</li>
+              <li>Total GST / ITC fields</li>
+            </ul>
+          </div>
+
+          <div class="rule">
+            <b>Hackathon mode:</b>
+            <ul>
+              <li>Dummy Excel is enough for demo</li>
+              <li>Show “validated ✅” + unlock next step</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // --- Basic format check + status updates ---
+    const allowedExt = ["csv","xlsx","xls","json"];
+
+    function extOk(file){
+      const name = (file?.name || "").toLowerCase();
+      const parts = name.split(".");
+      const ext = parts.length > 1 ? parts.pop() : "";
+      return allowedExt.includes(ext);
+    }
+
+    function setChip(elId, cls, msg){
+      const el = document.getElementById(elId);
+      if (!el) return;
+      el.innerHTML = `<span class="chip ${cls}">${msg}</span>`;
+    }
+
+    function bindFile(inputId, statusId){
+      const input = document.getElementById(inputId);
+      if (!input) return;
+
+      input.addEventListener("change", () => {
+        const f = input.files && input.files[0];
+        if (!f){
+          setChip(statusId, "", "No file selected");
+          return;
+        }
+        if (!extOk(f)){
+          setChip(statusId, "bad", `Invalid format: ${f.name}`);
+          input.value = "";
+          return;
+        }
+        setChip(statusId, "ok", `Selected: ${f.name}`);
+      });
+    }
+
+    bindFile("gstr1","st-gstr1");
+    bindFile("gstr3b","st-gstr3b");
+    bindFile("invoice","st-inv");
+
+    // --- GSTR-2B Auto-fill (UI simulation) ---
+    const gstr1 = document.getElementById("gstr1");
+    const gstr2bAuto = document.getElementById("gstr2bAuto");
+
+    gstr1.addEventListener("change", () => {
+      const f = gstr1.files && gstr1.files[0];
+      if (!f || !extOk(f)) return;
+
+      setChip("st-gstr2b", "auto", "Generating from GSTR-1...");
+      gstr2bAuto.value = "Generating...";
+
+      setTimeout(() => {
+        setChip("st-gstr2b", "auto", "Generated ✅ (Auto-filled)");
+        gstr2bAuto.value = "Generated ✅";
+      }, 900);
+    });
+
+    // --- Workflow unlock (demo) ---
+    function unlockNextStep(){
+      const s1 = document.getElementById("s1");
+      const s2 = document.getElementById("s2");
+
+      s1.classList.remove("active");
+      s1.querySelector(".badge").classList.remove("next");
+      s1.querySelector(".badge").classList.add("done");
+      s1.querySelector(".badge").textContent = "DONE";
+
+      s2.classList.remove("locked");
+      s2.classList.add("active");
+      s2.querySelector(".badge").classList.remove("lock");
+      s2.querySelector(".badge").classList.add("next");
+      s2.querySelector(".badge").textContent = "NEXT";
+
+      // Redirect to next page (if you create parse.html)
+      // window.location.href = "parse.html";
+    }
+
+    // Demo submit: validate required + auto 2B but also call backend
+    document.getElementById("uploadForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const g1 = document.getElementById("gstr1").files[0];
+      const g3 = document.getElementById("gstr3b").files[0];
+
+      if (!g1 || !g3){
+        alert("Upload required files: GSTR-1 and GSTR-3B. (GSTR-2B auto-fills)");
+        return;
+      }
+      if (gstr2bAuto.value !== "Generated ✅"){
+        alert("GSTR-2B is still generating. Please wait.");
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Session expired. Please login again.');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const formData = new FormData(e.target);
+      fetch('/api/upload', {
+        method:'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        },
+        body: formData
+      })
+        .then(r => r.json())
+        .then(resp => {
+          console.log('upload response', resp);
+          alert("✅ Upload validated. Next step unlocked: Parse & Clean.");
+          unlockNextStep();
+        })
+        .catch(err => {
+          alert('Upload failed: ' + err);
+        });
+    });
+
+    // Reset
+    document.getElementById("uploadForm").addEventListener("reset", () => {
+      setTimeout(() => {
+        setChip("st-gstr1","", "No file selected");
+        setChip("st-gstr3b","", "No file selected");
+        setChip("st-inv","", "No file selected");
+        setChip("st-gstr2b","auto", "Waiting for GSTR-1 upload");
+        gstr2bAuto.value = "Not generated yet";
+      }, 0);
+    });
+
+    // Prevent clicking locked steps
+    document.querySelectorAll(".step.locked").forEach(el => {
+      el.addEventListener("click", () => alert("Complete the current step first."));
+    });
+  </script>
+</body>
+</html>

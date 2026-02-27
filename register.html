@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registration - Intelligent GST Reconciliation Engine</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --blue:#2563eb;
+      --orange:#f97316;
+      --shadow: 0 10px 30px rgba(2, 6, 23, .08);
+      --radius: 14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
+      color:var(--text);
+    }
+    .wrap{
+      max-width: 980px;
+      margin: 40px auto;
+      padding: 0 16px 60px;
+    }
+    header{
+      display:flex;
+      gap:14px;
+      align-items:center;
+      margin-bottom: 18px;
+    }
+    .logo{
+      width:44px; height:44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--blue), var(--orange));
+      box-shadow: var(--shadow);
+    }
+    h1{ margin:0; font-size:22px; line-height:1.1; }
+    .sub{ margin:4px 0 0; color:var(--muted); font-size:14px; }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+    .field{ display:flex; flex-direction:column; gap:6px; }
+    label{ font-size:13px; color:var(--muted); }
+    input, select, textarea{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      outline:none;
+      background:#fff;
+      color:var(--text);
+      font-size:14px;
+    }
+    input:focus, select:focus, textarea:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+    }
+
+    .topbar{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      margin-bottom: 14px;
+      padding-bottom: 14px;
+      border-bottom: 1px dashed var(--border);
+    }
+    @media (max-width: 720px){
+      .topbar{ grid-template-columns: 1fr; }
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap:12px;
+      margin-top: 14px;
+    }
+    @media (max-width: 720px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .section{
+      display:none;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+    .section.active{ display:block; }
+    .section h2{
+      margin:0 0 10px;
+      font-size:16px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .badge{
+      font-size:12px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      color:var(--muted);
+      background:#f8fafc;
+    }
+
+    .actions{
+      display:flex;
+      justify-content: space-between;
+      align-items:center;
+      gap:12px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .btn{
+      border:0;
+      border-radius:12px;
+      padding:11px 14px;
+      font-weight:600;
+      cursor:pointer;
+      font-size:14px;
+    }
+    .btn-primary{ background: var(--blue); color:#fff; }
+    .btn-primary:hover{ filter: brightness(.95); }
+    .btn-ghost{
+      background:#fff;
+      border:1px solid var(--border);
+      color:var(--text);
+    }
+    .btn-ghost:hover{ background:#f8fafc; }
+    .hint{ font-size:12px; color:var(--muted); }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1>Registration</h1>
+        <p class="sub">Intelligent GST Reconciliation Engine</p>
+      </div>
+    </header>
+
+    <form class="card" id="registrationForm" action="#" method="post" autocomplete="on">
+      <!-- Role + Basic -->
+      <div class="topbar">
+        <div class="field">
+          <label for="role">Select Role</label>
+          <select id="role" name="role" required>
+            <option value="" selected disabled>Choose role</option>
+            <option value="taxpayer">Business / Taxpayer</option>
+            <option value="ca">CA / Tax Consultant</option>
+            <option value="officer">Government Officer</option>
+          </select>
+          <div class="hint">Form fields will change based on your role.</div>
+        </div>
+
+        <div class="field">
+          <label for="emailLogin">Login Email / Username</label>
+          <input id="emailLogin" name="login" type="text" placeholder="Enter email or username" required />
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" placeholder="Create password" required />
+        </div>
+
+        <div class="field">
+          <label for="confirmPassword">Confirm Password</label>
+          <input id="confirmPassword" name="confirmPassword" type="password" placeholder="Re-enter password" required />
+        </div>
+      </div>
+
+      <!-- Business / Taxpayer -->
+      <section id="section-taxpayer" class="section" aria-labelledby="h-taxpayer">
+        <h2 id="h-taxpayer">Business / Taxpayer <span class="badge">GSTIN Details</span></h2>
+        <div class="grid">
+          <div class="field">
+            <label for="gstin">GSTIN</label>
+            <input id="gstin" name="gstin" type="text" maxlength="15" placeholder="e.g., 36ABCDE1234F1Z5" />
+          </div>
+
+          <div class="field">
+            <label for="pan">PAN</label>
+            <input id="pan" name="pan" type="text" maxlength="10" placeholder="e.g., ABCDE1234F" />
+          </div>
+
+          <div class="field">
+            <label for="legalName">Legal Business Name</label>
+            <input id="legalName" name="legalBusinessName" type="text" placeholder="As per PAN / legal docs" />
+          </div>
+
+          <div class="field">
+            <label for="tradeName">Trade Name</label>
+            <input id="tradeName" name="tradeName" type="text" placeholder="If any" />
+          </div>
+
+          <div class="field">
+            <label for="businessType">Business Type</label>
+            <select id="businessType" name="businessType">
+              <option value="" selected disabled>Select</option>
+              <option>Proprietorship</option>
+              <option>Partnership</option>
+              <option>LLP</option>
+              <option>Pvt Ltd</option>
+              <option>Public Ltd</option>
+              <option>HUF</option>
+              <option>Trust / Society</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="turnoverRange">Turnover Range</label>
+            <select id="turnoverRange" name="turnoverRange">
+              <option value="" selected disabled>Select</option>
+              <option>Up to ₹40 Lakhs</option>
+              <option>₹40 Lakhs – ₹1.5 Crore</option>
+              <option>₹1.5 Crore – ₹5 Crore</option>
+              <option>₹5 Crore – ₹25 Crore</option>
+              <option>₹25 Crore+</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="industryType">Industry Type</label>
+            <select id="industryType" name="industryType">
+              <option value="" selected disabled>Select</option>
+              <option>Manufacturing</option>
+              <option>Trading</option>
+              <option>Services</option>
+              <option>E-commerce</option>
+              <option>Construction</option>
+              <option>Logistics</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="erp">ERP / Accounting Software Used</label>
+            <input id="erp" name="erpSoftware" type="text" placeholder="e.g., Tally, Zoho, SAP" />
+          </div>
+
+          <div class="field" style="grid-column: 1 / -1;">
+            <label for="regAddress">Registered Address</label>
+            <textarea id="regAddress" name="registeredAddress" rows="3" placeholder="Full registered address"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- CA / Tax Consultant -->
+      <section id="section-ca" class="section" aria-labelledby="h-ca">
+        <h2 id="h-ca">CA / Tax Consultant <span class="badge">Professional</span></h2>
+        <div class="grid">
+          <div class="field">
+            <label for="caFullName">Full Name</label>
+            <input id="caFullName" name="caFullName" type="text" placeholder="Your full name" />
+          </div>
+
+          <div class="field">
+            <label for="membershipNo">Membership Number</label>
+            <input id="membershipNo" name="membershipNumber" type="text" placeholder="ICAI membership no." />
+          </div>
+
+          <div class="field">
+            <label for="firmName">Firm Name</label>
+            <input id="firmName" name="firmName" type="text" placeholder="Firm / Company name" />
+          </div>
+
+          <div class="field">
+            <label for="caMobile">Mobile Number</label>
+            <input id="caMobile" name="mobileNumber" type="tel" placeholder="e.g., 9876543210" />
+          </div>
+
+          <div class="field">
+            <label for="caEmail">Email</label>
+            <input id="caEmail" name="email" type="email" placeholder="name@example.com" />
+          </div>
+
+          <div class="field" style="grid-column: 1 / -1;">
+            <label for="caOfficeAddress">Office Address</label>
+            <textarea id="caOfficeAddress" name="officeAddress" rows="3" placeholder="Full office address"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- Government Officer -->
+      <section id="section-officer" class="section" aria-labelledby="h-officer">
+        <h2 id="h-officer">Government Officer <span class="badge">Official</span></h2>
+        <div class="grid">
+          <div class="field">
+            <label for="officerName">Full Name</label>
+            <input id="officerName" name="officerFullName" type="text" placeholder="Officer full name" />
+          </div>
+
+          <div class="field">
+            <label for="department">Department</label>
+            <input id="department" name="department" type="text" placeholder="e.g., GST Department" />
+          </div>
+
+          <div class="field">
+            <label for="designation">Designation</label>
+            <input id="designation" name="designation" type="text" placeholder="e.g., Inspector" />
+          </div>
+
+          <div class="field">
+            <label for="employeeId">Employee ID</label>
+            <input id="employeeId" name="employeeId" type="text" placeholder="Employee / Staff ID" />
+          </div>
+
+          <div class="field">
+            <label for="officialEmail">Official Email ID</label>
+            <input id="officialEmail" name="officialEmail" type="email" placeholder="name@gov.in" />
+          </div>
+
+          <div class="field">
+            <label for="officeLocation">Office Location</label>
+            <input id="officeLocation" name="officeLocation" type="text" placeholder="City / Office" />
+          </div>
+        </div>
+      </section>
+
+      <div class="actions">
+        <div class="hint">After selecting role, fill only that section.</div>
+        <div style="display:flex; gap:10px;">
+          <button type="reset" class="btn btn-ghost">Reset</button>
+          <button type="submit" class="btn btn-primary">Register</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const roleEl = document.getElementById("role");
+    const secTaxpayer = document.getElementById("section-taxpayer");
+    const secCA = document.getElementById("section-ca");
+    const secOfficer = document.getElementById("section-officer");
+
+    function hideAll(){
+      secTaxpayer.classList.remove("active");
+      secCA.classList.remove("active");
+      secOfficer.classList.remove("active");
+    }
+
+    roleEl.addEventListener("change", () => {
+      hideAll();
+      if (roleEl.value === "taxpayer") secTaxpayer.classList.add("active");
+      if (roleEl.value === "ca") secCA.classList.add("active");
+      if (roleEl.value === "officer") secOfficer.classList.add("active");
+    });
+
+    // optional: basic confirm password check and submit via API
+    document.getElementById("registrationForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const p1 = document.getElementById("password").value;
+      const p2 = document.getElementById("confirmPassword").value;
+      if (p1 !== p2) {
+        alert("Passwords do not match.");
+        return;
+      }
+
+      // gather form fields into object
+      const form = e.target;
+      const formData = new FormData(form);
+      const data = {};
+      formData.forEach((v, k) => {
+        data[k] = v;
+      });
+
+      fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+        .then(r => r.json())
+        .then(res => {
+          if (res.status === 'success') {
+            alert('Registration complete! Redirecting to login...');
+            window.location.href = 'login.html';
+          } else {
+            alert('Registration error: ' + (res.detail || JSON.stringify(res)));
+          }
+        })
+        .catch(err => {
+          alert('Registration failed: ' + err);
+        });
+    });
+  </script>
+</body>
+</html>
