@@ -43,7 +43,7 @@ pip install fastapi uvicorn sqlalchemy python-jose passlib python-dotenv python-
 ### 2. Start the Server
 
 ```powershell
-cd C:\Hackathon
+
 python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -287,3 +287,4 @@ curl http://localhost:8000/api/settings \
 - [ ] Implement caching for better performance
 - [ ] Add webhook support for integrations
 - [ ] Create mobile API version
+
