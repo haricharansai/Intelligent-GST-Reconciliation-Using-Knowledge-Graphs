@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parsing & Cleaning - GST Reconciliation Engine</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --blue:#2563eb;
+      --orange:#f97316;
+      --green:#16a34a;
+      --red:#dc2626;
+      --shadow: 0 10px 30px rgba(2, 6, 23, .08);
+      --radius: 14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    /* Layout */
+    .app{ min-height:100vh; display:flex; }
+    aside{
+      width: 270px;
+      background: #0b1220;
+      color: #e5e7eb;
+      padding: 18px 14px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      border-right: 1px solid rgba(255,255,255,.06);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px 16px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .logo{
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--blue), var(--orange));
+    }
+    .brand h1{ margin:0; font-size:14px; line-height:1.1; font-weight:900; }
+    .brand p{ margin:4px 0 0; font-size:12px; color: rgba(229,231,235,.75); }
+
+    nav{ margin-top: 10px; }
+    .nav-item{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      color: rgba(229,231,235,.9);
+      text-decoration:none;
+      font-size: 14px;
+      margin-bottom: 6px;
+      border: 1px solid transparent;
+      transition: .15s;
+    }
+    .nav-item:hover{ background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08); }
+    .nav-item.active{ background: rgba(37,99,235,.20); border-color: rgba(37,99,235,.45); }
+    .dot{ width: 10px; height: 10px; border-radius: 999px; background: rgba(255,255,255,.35); }
+    .nav-item.active .dot{ background: var(--blue); }
+
+    /* Workflow steps */
+    .wf{
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .wf h3{
+      margin:0 10px 10px;
+      font-size: 12px;
+      color: rgba(229,231,235,.75);
+      letter-spacing: .4px;
+      text-transform: uppercase;
+    }
+    .step{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap:10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(229,231,235,.9);
+      font-size: 13px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .step.locked{ opacity: .55; cursor: not-allowed; }
+    .step.active{
+      border-color: rgba(37,99,235,.55);
+      background: rgba(37,99,235,.18);
+    }
+    .badge{
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      color: rgba(229,231,235,.85);
+      white-space: nowrap;
+    }
+    .badge.done{ border-color: rgba(22,163,74,.35); background: rgba(22,163,74,.12); }
+    .badge.next{ border-color: rgba(249,115,22,.35); background: rgba(249,115,22,.12); }
+    .badge.lock{ border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.06); }
+
+    main{ flex:1; padding: 22px 22px 60px; }
+
+    /* Topbar */
+    .topbar{
+      display:flex;
+      align-items:flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .title h2{ margin:0; font-size: 20px; }
+    .title .sub{ margin:6px 0 0; color: var(--muted); font-size: 13px; }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .col-8{ grid-column: span 8; }
+    .col-4{ grid-column: span 4; }
+    .col-12{ grid-column: span 12; }
+    @media (max-width: 980px){
+      aside{ width: 230px; }
+      .col-8, .col-4{ grid-column: span 12; }
+      main{ padding: 18px 14px 60px; }
+    }
+
+    /* Controls */
+    .controls{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:end;
+      margin-top: 6px;
+    }
+    .field{ display:flex; flex-direction:column; gap:6px; min-width: 220px; flex:1; }
+    label{ font-size: 13px; color: var(--muted); }
+    input, select{
+      width:100%;
+      padding: 10px 12px;
+      border:1px solid var(--border);
+      border-radius: 12px;
+      outline:none;
+      background:#fff;
+      color: var(--text);
+      font-size: 14px;
+    }
+    input:focus, select:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+    }
+    .btn{
+      border:0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 900;
+      cursor:pointer;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .btn-primary{ background: var(--blue); color:#fff; }
+    .btn-primary:hover{ filter: brightness(.95); }
+    .btn-ghost{
+      background:#fff;
+      border:1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-ghost:hover{ background:#f8fafc; }
+
+    /* Progress */
+    .progressBox{
+      margin-top: 12px;
+      border: 1px dashed var(--border);
+      background:#f8fafc;
+      border-radius: 14px;
+      padding: 12px;
+      display:none;
+    }
+    .bar{
+      height: 10px;
+      background:#e2e8f0;
+      border-radius: 999px;
+      overflow:hidden;
+      margin-top: 10px;
+    }
+    .bar > div{
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--blue), var(--orange));
+      transition: width .3s;
+    }
+    .muted{ color: var(--muted); font-size: 12px; line-height: 1.55; }
+
+    /* Metrics */
+    .metrics{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 680px){ .metrics{ grid-template-columns: 1fr; } }
+    .metric{
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background:#fff;
+    }
+    .metric .label{ color: var(--muted); font-size: 12px; }
+    .metric .value{ font-size: 22px; font-weight: 900; margin-top: 6px; }
+
+    /* Table */
+    table{
+      width:100%;
+      border-collapse: collapse;
+      overflow:hidden;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background:#fff;
+      margin-top: 12px;
+    }
+    th, td{
+      padding: 10px 10px;
+      text-align:left;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      white-space: nowrap;
+    }
+    th{
+      background:#f8fafc;
+      color: var(--muted);
+      font-weight: 900;
+    }
+    tr:last-child td{ border-bottom: 0; }
+    .wrapText{ white-space: normal; }
+
+    /* Right panel */
+    .summary h3{ margin:0 0 8px; font-size: 14px; }
+    .summary p{ margin:0 0 10px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .rule{
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fff;
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    ul{ margin: 8px 0 0 18px; padding:0; }
+    .note{
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .pill{
+      display:inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background:#f8fafc;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .pill.ok{ border-color: rgba(22,163,74,.35); background: rgba(22,163,74,.08); color:#166534; }
+    .pill.bad{ border-color: rgba(220,38,38,.35); background: rgba(220,38,38,.08); color:#991b1b; }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>GST Reconciliation</h1>
+          <p>Workflow Demo</p>
+        </div>
+      </div>
+
+      <nav>
+        <a class="nav-item" href="upload.html"><span class="dot"></span> Upload Data</a>
+        <a class="nav-item active" href="parse.html"><span class="dot"></span> Parsing & Cleaning</a>
+        <a class="nav-item" href="graph.html"><span class="dot"></span> Knowledge Graph</a>
+        <a class="nav-item" href="recon.html"><span class="dot"></span> Invoice Matching</a>
+        <a class="nav-item" href="mismatch.html"><span class="dot"></span> Mismatch Detection</a>
+        <a class="nav-item" href="risk.html"><span class="dot"></span> Risk / AI</a>
+        <a class="nav-item" href="reports.html"><span class="dot"></span> Reports</a>
+      </nav>
+
+      <!-- Workflow stepper -->
+      <div class="wf">
+        <h3>Workflow</h3>
+
+        <div class="step" id="s1">
+          <span>1. Upload GST Data</span>
+          <span class="badge done">DONE</span>
+        </div>
+
+        <div class="step active" id="s2">
+          <span>2. Parse & Clean</span>
+          <span class="badge next">CURRENT</span>
+        </div>
+
+        <div class="step locked" id="s3" title="Complete parsing first">
+          <span>3. Knowledge Graph</span>
+          <span class="badge lock">LOCKED</span>
+        </div>
+
+        <div class="step locked" id="s4" title="Complete graph first">
+          <span>4. Reconcile</span>
+          <span class="badge lock">LOCKED</span>
+        </div>
+
+        <div class="step locked" id="s5" title="Complete recon first">
+          <span>5. Mismatches</span>
+          <span class="badge lock">LOCKED</span>
+        </div>
+
+        <div class="step locked" id="s6" title="Complete mismatch first">
+          <span>6. Risk / AI</span>
+          <span class="badge lock">LOCKED</span>
+        </div>
+
+        <div class="step locked" id="s7" title="Complete risk first">
+          <span>7. Reports</span>
+          <span class="badge lock">LOCKED</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main>
+      <div class="topbar">
+        <div class="title">
+          <h2>Parsing & Cleaning</h2>
+          <div class="sub">Backend extracts invoice fields, removes duplicates, and standardizes values for graph + reconciliation.</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- Left -->
+        <section class="card col-8">
+          <div class="controls">
+            <div class="field">
+              <label for="period">Return Period</label>
+              <input id="period" type="text" placeholder="e.g., 2026-02" value="2026-02" />
+            </div>
+
+            <button class="btn btn-primary" id="parseBtn">Run Parse & Clean</button>
+            <button class="btn btn-ghost" id="resetBtn">Reset</button>
+          </div>
+
+          <div class="progressBox" id="progressBox">
+            <div class="muted" id="progressText">Preparing…</div>
+            <div class="bar"><div id="barFill"></div></div>
+          </div>
+
+          <div class="metrics" id="metrics" style="display:none;">
+            <div class="metric">
+              <div class="label">Total Rows (Raw)</div>
+              <div class="value" id="mTotal">0</div>
+            </div>
+            <div class="metric">
+              <div class="label">Clean Rows</div>
+              <div class="value" id="mClean">0</div>
+            </div>
+            <div class="metric">
+              <div class="label">Duplicates Removed</div>
+              <div class="value" id="mDup">0</div>
+            </div>
+          </div>
+
+          <table id="sampleTable" style="display:none;" aria-label="Sample cleaned invoices">
+            <thead>
+              <tr>
+                <th>Supplier GSTIN</th>
+                <th>Buyer GSTIN</th>
+                <th>Invoice No</th>
+                <th>Invoice Date</th>
+                <th>Taxable Value</th>
+                <th>GST Amount</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+
+          <div class="controls" style="margin-top:12px;">
+            <button class="btn btn-primary" id="goGraphBtn" disabled>Proceed to Knowledge Graph →</button>
+          </div>
+
+          <div class="note">
+            After parsing succeeds, next step <b>Knowledge Graph</b> unlocks and the button becomes available.
+          </div>
+        </section>
+
+        <!-- Right -->
+        <aside class="card col-4 summary">
+          <h3>What backend does here</h3>
+          <p>This step converts uploaded GST files into a clean invoice dataset used for graph building + reconciliation.</p>
+
+          <div class="rule">
+            <b>Cleaning actions:</b>
+            <ul>
+              <li>Normalize invoice dates</li>
+              <li>Convert numbers properly</li>
+              <li>Remove duplicates</li>
+              <li>Standardize GSTIN formats</li>
+            </ul>
+          </div>
+
+          <div class="rule">
+            <b>Output format (example):</b><br/>
+            <span class="pill ok">Invoice object list</span>
+            <ul>
+              <li>supplierGSTIN</li>
+              <li>buyerGSTIN</li>
+              <li>invoiceNo</li>
+              <li>invoiceDate</li>
+              <li>taxableValue</li>
+              <li>gstAmount</li>
+            </ul>
+          </div>
+
+          <div class="rule">
+            <b>Hackathon mode:</b>
+            <ul>
+              <li>If parsing fails, show sample dummy data</li>
+              <li>Still allow graph build for demo</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ---------- Workflow unlock helpers ----------
+    function unlockGraphStep(){
+      const s3 = document.getElementById("s3");
+      s3.classList.remove("locked");
+      s3.classList.add("active");
+      const b = s3.querySelector(".badge");
+      b.classList.remove("lock");
+      b.classList.add("next");
+      b.textContent = "NEXT";
+      document.getElementById("goGraphBtn").disabled = false;
+    }
+
+    // prevent clicking locked steps
+    document.querySelectorAll(".step.locked").forEach(el => {
+      el.addEventListener("click", () => alert("Complete the current step first."));
+    });
+
+    // ---------- UI rendering ----------
+    function showProgress(msg, pct){
+      const box = document.getElementById("progressBox");
+      box.style.display = "block";
+      document.getElementById("progressText").textContent = msg;
+      document.getElementById("barFill").style.width = pct + "%";
+    }
+
+    function renderResult(data){
+      // data expected:
+      // { totalRows, cleanRows, duplicatesRemoved, sample: [ {supplierGSTIN,buyerGSTIN,invoiceNo,invoiceDate,taxableValue,gstAmount} ] }
+      document.getElementById("metrics").style.display = "grid";
+      document.getElementById("mTotal").textContent = data.totalRows ?? 0;
+      document.getElementById("mClean").textContent = data.cleanRows ?? 0;
+      document.getElementById("mDup").textContent = data.duplicatesRemoved ?? 0;
+
+      const sample = Array.isArray(data.sample) ? data.sample.slice(0, 8) : [];
+      const tbody = document.getElementById("tbody");
+      tbody.innerHTML = sample.map(r => `
+        <tr>
+          <td>${r.supplierGSTIN ?? "-"}</td>
+          <td>${r.buyerGSTIN ?? "-"}</td>
+          <td>${r.invoiceNo ?? "-"}</td>
+          <td>${r.invoiceDate ?? "-"}</td>
+          <td>${r.taxableValue ?? "-"}</td>
+          <td>${r.gstAmount ?? "-"}</td>
+        </tr>
+      `).join("");
+
+      document.getElementById("sampleTable").style.display = sample.length ? "table" : "none";
+      unlockGraphStep();
+    }
+
+    // ---------- Demo fallback (if backend not ready) ----------
+    function dummyResult(){
+      return {
+        totalRows: 120,
+        cleanRows: 110,
+        duplicatesRemoved: 10,
+        sample: [
+          {supplierGSTIN:"29BBBCD1111K1Z2", buyerGSTIN:"36AAAAA0000A1Z5", invoiceNo:"S-2209", invoiceDate:"2026-02-03", taxableValue: "100000", gstAmount:"18000"},
+          {supplierGSTIN:"27AABCU9603R1ZV", buyerGSTIN:"36AAAAA0000A1Z5", invoiceNo:"A-7781", invoiceDate:"2026-02-05", taxableValue: "45000", gstAmount:"8100"},
+          {supplierGSTIN:"19DDDDD3333D1Z7", buyerGSTIN:"36AAAAA0000A1Z5", invoiceNo:"E-9001", invoiceDate:"2026-02-08", taxableValue: "280000", gstAmount:"50400"},
+        ]
+      };
+    }
+
+    // ---------- API call ----------
+    async function runParse(){
+  const token = localStorage.getItem("token");
+
+  if (!token){
+    alert("Session expired. Please login again.");
+    window.location.href = "login.html";
+    return;
+  }
+
+  const API_BASE = "http://localhost:8000";
+  const period = document.getElementById("period").value.trim() || "2026-02";
+
+  showProgress("Starting parse & clean…", 15);
+
+  try{
+    showProgress("Calling backend API…", 35);
+
+    const res = await fetch(
+      `${API_BASE}/api/parse?period=${encodeURIComponent(period)}`,
+      {
+        method: "GET",   // ← changed from POST to GET (fixes 405)
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      }
+    );
+
+    showProgress("Processing response…", 65);
+
+    if (!res.ok){
+      const errText = await res.text().catch(() => "");
+      throw new Error(`Status ${res.status} - ${errText}`);
+    }
+
+    const json = await res.json();
+
+    // Support both { data: {...} } and direct object responses
+    const data = json.data ? json.data : json;
+
+    renderResult(data);
+
+    showProgress("Completed successfully.", 100);
+    unlockGraphStep();
+
+    alert("✅ Parsing & cleaning completed. Next step unlocked: Knowledge Graph.");
+
+  } catch(err){
+    console.error("Parse error:", err);
+
+    showProgress("Backend unreachable. Using demo sample…", 90);
+    renderResult(dummyResult());
+    showProgress("Completed (Demo).", 100);
+
+    alert("⚠️ Backend error:\n" + err.message + "\n\nShowing demo data so you can continue.");
+  }
+}
+
+    // ---------- Buttons ----------
+    document.getElementById("parseBtn").addEventListener("click", runParse);
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      document.getElementById("progressBox").style.display = "none";
+      document.getElementById("metrics").style.display = "none";
+      document.getElementById("sampleTable").style.display = "none";
+      document.getElementById("tbody").innerHTML = "";
+      document.getElementById("goGraphBtn").disabled = true;
+
+      // reset step 3
+      const s3 = document.getElementById("s3");
+      s3.classList.add("locked");
+      s3.classList.remove("active");
+      const b = s3.querySelector(".badge");
+      b.className = "badge lock";
+      b.textContent = "LOCKED";
+    });
+
+    document.getElementById("goGraphBtn").addEventListener("click", () => {
+      window.location.href = "graph.html";
+    });
+  </script>
+</body>
+</html>

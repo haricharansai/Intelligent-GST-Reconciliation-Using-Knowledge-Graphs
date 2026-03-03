@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dashboard - GST Reconciliation</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;background:#f5f7fb;color:#0f172a}
+    .wrap{max-width:960px;margin:40px auto;padding:24px;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(2,6,23,.06);}
+    .meta{display:flex;gap:12px;align-items:center}
+    .avatar{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#2563eb,#f97316)}
+    h1{margin:0 0 8px}
+    p{margin:4px 0;color:#64748b}
+    .actions{margin-top:18px}
+    a.button{display:inline-block;padding:10px 14px;background:#111;color:#fff;border-radius:8px;text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="meta">
+      <div class="avatar" aria-hidden></div>
+      <div>
+        <h1 id="welcome">Welcome</h1>
+        <p id="sub">GST Reconciliation Dashboard</p>
+      </div>
+    </div>
+
+    <section style="margin-top:20px">
+      <h2>Summary</h2>
+      <p>This is a placeholder dashboard for the GST Reconciliation demo. Use the navigation below to return to login.</p>
+      <div class="actions">
+        <a class="button" href="#" onclick="signOut(); return false;">Sign out</a>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function signOut() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user_id');
+      localStorage.removeItem('role');
+      window.location.href = 'login.html';
+    }
+
+    function loadDashboard() {
+      const token = localStorage.getItem('token');
+      const role = localStorage.getItem('role');
+      
+      if (!token) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      // Fetch dashboard data from API
+      fetch('/api/dashboard', {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      })
+        .then(r => {
+          if (!r.ok) throw new Error('Failed to load dashboard');
+          return r.json();
+        })
+        .then(data => {
+          const welcome = document.getElementById('welcome');
+          const sub = document.getElementById('sub');
+          
+          if (welcome) welcome.textContent = `Welcome, User ${data.user_id}`;
+          if (sub) sub.textContent = `Role: ${data.role} | Total Uploads: ${data.total_uploads} | Reconciliations: ${data.total_reconciliations}`;
+        })
+        .catch(err => {
+          console.log('Dashboard load error (using defaults):', err);
+          const welcome = document.getElementById('welcome');
+          const sub = document.getElementById('sub');
+          if (welcome) welcome.textContent = 'Welcome to GST Reconciliation';
+          if (sub) sub.textContent = 'Dashboard - ' + role;
+        });
+    }
+
+    // Load dashboard on page load
+    document.addEventListener('DOMContentLoaded', loadDashboard);
+  </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Intelligent GST Reconciliation Engine</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --blue:#2563eb;
+      --orange:#f97316;
+      --green:#16a34a;
+      --red:#dc2626;
+      --yellow:#ca8a04;
+      --shadow: 0 10px 30px rgba(2, 6, 23, .08);
+      --radius: 14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
+      color:var(--text);
+    }
+
+    /* Layout */
+    .app{
+      min-height: 100vh;
+      display:flex;
+    }
+    aside{
+      width: 260px;
+      background: #0b1220;
+      color: #e5e7eb;
+      padding: 18px 14px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      border-right: 1px solid rgba(255,255,255,.06);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px 16px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .logo{
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--blue), var(--orange));
+    }
+    .brand h1{
+      font-size: 14px;
+      margin:0;
+      line-height: 1.1;
+      font-weight: 800;
+    }
+    .brand p{
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: rgba(229,231,235,.75);
+    }
+
+    nav{ margin-top: 10px; }
+    .nav-item{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      color: rgba(229,231,235,.9);
+      text-decoration:none;
+      font-size: 14px;
+      margin-bottom: 6px;
+      border: 1px solid transparent;
+    }
+    .nav-item:hover{
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.08);
+    }
+    .nav-item.active{
+      background: rgba(37,99,235,.20);
+      border-color: rgba(37,99,235,.45);
+    }
+    .dot{
+      width: 10px; height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.35);
+    }
+    .nav-item.active .dot{ background: var(--blue); }
+
+    main{
+      flex:1;
+      padding: 22px 22px 60px;
+    }
+
+    /* Top bar */
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .title h2{
+      margin:0;
+      font-size: 20px;
+    }
+    .title .sub{
+      margin:6px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .right{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .pill{
+      border:1px solid var(--border);
+      background: #fff;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: var(--muted);
+      box-shadow: 0 6px 18px rgba(2,6,23,.05);
+    }
+    .btn{
+      border:0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 700;
+      cursor:pointer;
+      font-size: 13px;
+    }
+    .btn-primary{ background: var(--blue); color:#fff; }
+    .btn-primary:hover{ filter: brightness(.95); }
+
+    /* Cards */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+    .metric{
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .metric .label{
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .metric .value{
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: .2px;
+    }
+    .metric .delta{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .badge{
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .badge.good{ border-color: rgba(22,163,74,.35); background: rgba(22,163,74,.08); color: #166534; }
+    .badge.warn{ border-color: rgba(202,138,4,.35); background: rgba(202,138,4,.10); color: #854d0e; }
+    .badge.danger{ border-color: rgba(220,38,38,.35); background: rgba(220,38,38,.08); color: #991b1b; }
+
+    /* Responsive columns */
+    .col-3{ grid-column: span 3; }
+    .col-4{ grid-column: span 4; }
+    .col-6{ grid-column: span 6; }
+    .col-12{ grid-column: span 12; }
+
+    @media (max-width: 1100px){
+      aside{ width: 230px; }
+      .col-3{ grid-column: span 6; }
+      .col-4{ grid-column: span 6; }
+    }
+    @media (max-width: 720px){
+      aside{
+        position: fixed;
+        left: 0;
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        z-index: 10;
+      }
+      aside.open{ transform: translateX(0); }
+      main{ padding: 18px 14px 60px; }
+      .col-3,.col-4,.col-6{ grid-column: span 12; }
+      .mobilebar{
+        display:flex;
+        gap:10px;
+        align-items:center;
+        margin-bottom: 12px;
+      }
+      .menuBtn{
+        background:#0b1220;
+        color:#fff;
+        border:0;
+        border-radius:12px;
+        padding:10px 12px;
+        font-weight:800;
+        cursor:pointer;
+      }
+    }
+    .mobilebar{ display:none; }
+
+    /* Charts (simple CSS bars) */
+    .chart-title{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    .chart-title h3{
+      margin:0;
+      font-size: 14px;
+    }
+    .chart-title span{
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .miniChart{
+      display:flex;
+      gap: 8px;
+      align-items:flex-end;
+      height: 120px;
+      padding: 8px 4px 2px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px dashed var(--border);
+    }
+    .bar{
+      flex:1;
+      border-radius: 10px 10px 6px 6px;
+      background: linear-gradient(180deg, rgba(37,99,235,.85), rgba(37,99,235,.25));
+      min-width: 12px;
+    }
+    .bar.red{
+      background: linear-gradient(180deg, rgba(220,38,38,.85), rgba(220,38,38,.22));
+    }
+    .legend{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .legend i{
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      display:inline-block;
+      margin-right: 6px;
+      vertical-align: -1px;
+      background: rgba(37,99,235,.7);
+    }
+    .legend i.red{ background: rgba(220,38,38,.7); }
+
+    /* Risk distribution */
+    .dist{
+      display:flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .row .name{
+      font-size: 13px;
+      color: var(--muted);
+      width: 90px;
+    }
+    .track{
+      flex: 1;
+      height: 12px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      overflow:hidden;
+    }
+    .fill{
+      height:100%;
+      border-radius: 999px;
+      background: rgba(37,99,235,.8);
+      width: 40%;
+    }
+    .fill.low{ background: rgba(22,163,74,.75); }
+    .fill.med{ background: rgba(202,138,4,.75); }
+    .fill.high{ background: rgba(220,38,38,.75); }
+    .row .pct{ font-size: 12px; color: var(--muted); width: 44px; text-align:right; }
+
+    /* Alerts table */
+    table{
+      width:100%;
+      border-collapse: collapse;
+      overflow:hidden;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background:#fff;
+    }
+    th, td{
+      padding: 10px 10px;
+      text-align:left;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th{
+      background:#f8fafc;
+      color: var(--muted);
+      font-weight: 800;
+    }
+    tr:last-child td{ border-bottom: 0; }
+    .tag{
+      display:inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      background:#f8fafc;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .tag.high{ border-color: rgba(220,38,38,.35); background: rgba(220,38,38,.08); color:#991b1b; }
+    .tag.med{ border-color: rgba(202,138,4,.35); background: rgba(202,138,4,.10); color:#854d0e; }
+    .tag.low{ border-color: rgba(22,163,74,.35); background: rgba(22,163,74,.08); color:#166534; }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>GST Reconciliation</h1>
+          <p>Intelligent Engine</p>
+        </div>
+      </div>
+
+<nav aria-label="Sidebar Navigation">
+  <a class="nav-item active" href="dashboard.html"><span class="dot"></span> Dashboard</a>
+  <a class="nav-item" href="upload.html"><span class="dot"></span> Upload Data</a>
+  <a class="nav-item" href="recon.html"><span class="dot"></span> Reconciliation</a>
+  <a class="nav-item" href="mismatch.html"><span class="dot"></span> Mismatches</a>
+  <a class="nav-item" href="risk.html"><span class="dot"></span> Vendor Risk</a>
+  <a class="nav-item" href="reports.html"><span class="dot"></span> Reports</a>
+  <a class="nav-item" href="settings.html"><span class="dot"></span> Settings</a>
+</nav>
+    </aside>
+
+    <!-- Main -->
+    <main>
+      <!-- Mobile menu button -->
+      <div class="mobilebar">
+        <button class="menuBtn" id="menuBtn">☰ Menu</button>
+        <div class="pill">Latest Run: 2026-02-27 18:10 IST</div>
+      </div>
+
+      <!-- Topbar -->
+      <div class="topbar">
+        <div class="title">
+          <h2>Main Dashboard</h2>
+          <div class="sub">Summary of the latest reconciliation run</div>
+        </div>
+        <div class="right">
+          <div class="pill"><b>Latest Run:</b> 2026-02-27 18:10 IST</div>
+          <button class="btn btn-primary">Run Reconciliation</button>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- Metric cards -->
+        <div class="card col-3">
+          <div class="metric">
+            <div>
+              <div class="label">Total Invoices</div>
+              <div class="value">12,480</div>
+              <div class="delta">Across last uploaded period</div>
+            </div>
+            <span class="badge">All</span>
+          </div>
+        </div>
+
+        <div class="card col-3">
+          <div class="metric">
+            <div>
+              <div class="label">Matched Invoices</div>
+              <div class="value">11,720</div>
+              <div class="delta">Auto-matched in system</div>
+            </div>
+            <span class="badge good">Matched</span>
+          </div>
+        </div>
+
+        <div class="card col-3">
+          <div class="metric">
+            <div>
+              <div class="label">Mismatched Invoices</div>
+              <div class="value">760</div>
+              <div class="delta">Need review / action</div>
+            </div>
+            <span class="badge warn">Mismatch</span>
+          </div>
+        </div>
+
+        <div class="card col-3">
+          <div class="metric">
+            <div>
+              <div class="label">High Risk Cases</div>
+              <div class="value">84</div>
+              <div class="delta">Priority investigation</div>
+            </div>
+            <span class="badge danger">High Risk</span>
+          </div>
+        </div>
+
+        <!-- Mismatch trend -->
+        <div class="card col-6">
+          <div class="chart-title">
+            <h3>Mismatch trend over time</h3>
+            <span>Last 8 runs</span>
+          </div>
+
+          <!-- simple bars: blue = matched, red = mismatched -->
+          <div class="miniChart" aria-label="Mismatch trend chart">
+            <div class="bar" style="height:78%"></div>
+            <div class="bar red" style="height:22%"></div>
+
+            <div class="bar" style="height:82%"></div>
+            <div class="bar red" style="height:18%"></div>
+
+            <div class="bar" style="height:74%"></div>
+            <div class="bar red" style="height:26%"></div>
+
+            <div class="bar" style="height:85%"></div>
+            <div class="bar red" style="height:15%"></div>
+
+            <div class="bar" style="height:80%"></div>
+            <div class="bar red" style="height:20%"></div>
+
+            <div class="bar" style="height:76%"></div>
+            <div class="bar red" style="height:24%"></div>
+
+            <div class="bar" style="height:83%"></div>
+            <div class="bar red" style="height:17%"></div>
+
+            <div class="bar" style="height:79%"></div>
+            <div class="bar red" style="height:21%"></div>
+          </div>
+
+          <div class="legend">
+            <span><i></i> Matched</span>
+            <span><i class="red"></i> Mismatched</span>
+          </div>
+        </div>
+
+        <!-- Risk distribution -->
+        <div class="card col-6">
+          <div class="chart-title">
+            <h3>Risk classification distribution</h3>
+            <span>Low / Medium / High</span>
+          </div>
+
+          <div class="dist" aria-label="Risk distribution">
+            <div class="row">
+              <div class="name">Low</div>
+              <div class="track"><div class="fill low" style="width:72%"></div></div>
+              <div class="pct">72%</div>
+            </div>
+            <div class="row">
+              <div class="name">Medium</div>
+              <div class="track"><div class="fill med" style="width:22%"></div></div>
+              <div class="pct">22%</div>
+            </div>
+            <div class="row">
+              <div class="name">High</div>
+              <div class="track"><div class="fill high" style="width:6%"></div></div>
+              <div class="pct">6%</div>
+            </div>
+          </div>
+
+          <div class="legend" style="margin-top:12px;">
+            <span><span class="tag low">Low</span> Normal vendors / invoices</span>
+            <span><span class="tag med">Medium</span> Monitor closely</span>
+            <span><span class="tag high">High</span> Immediate review</span>
+          </div>
+        </div>
+
+        <!-- Recent alerts -->
+        <div class="card col-12">
+          <div class="chart-title">
+            <h3>Recent flagged alerts</h3>
+            <span>Auto-detected signals (latest run)</span>
+          </div>
+
+          <table aria-label="Recent flagged alerts">
+            <thead>
+              <tr>
+                <th style="width:170px;">Alert Type</th>
+                <th>Details</th>
+                <th style="width:120px;">Risk</th>
+                <th style="width:160px;">Last Seen</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Repeated mismatches</td>
+                <td>Vendor <b>27AABCU9603R1ZV</b> has mismatches in <b>5</b> consecutive runs (invoice values & ITC mismatch).</td>
+                <td><span class="tag med">Medium</span></td>
+                <td>2026-02-27 18:10</td>
+              </tr>
+              <tr>
+                <td>High ITC risk</td>
+                <td>Invoice chain indicates possible ITC exposure for <b>₹3.8L</b> (supplier filing anomalies).</td>
+                <td><span class="tag high">High</span></td>
+                <td>2026-02-27 18:10</td>
+              </tr>
+              <tr>
+                <td>Vendor profile anomaly</td>
+                <td>New vendor with high turnover change (+280%) compared to last period; requires verification.</td>
+                <td><span class="tag med">Medium</span></td>
+                <td>2026-02-27 18:10</td>
+              </tr>
+              <tr>
+                <td>Minor mismatch cluster</td>
+                <td>Multiple invoices show small rounding differences (likely data entry / ERP export issue).</td>
+                <td><span class="tag low">Low</span></td>
+                <td>2026-02-27 18:10</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Mobile sidebar toggle
+    const sidebar = document.getElementById("sidebar");
+    const btn = document.getElementById("menuBtn");
+    if (btn) {
+      btn.addEventListener("click", () => {
+        sidebar.classList.toggle("open");
+      });
+    }
+  </script>
+</body>
+</html>

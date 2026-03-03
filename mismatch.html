@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mismatches - Intelligent GST Reconciliation Engine</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --blue:#2563eb;
+      --orange:#f97316;
+      --green:#16a34a;
+      --red:#dc2626;
+      --yellow:#ca8a04;
+      --shadow: 0 10px 30px rgba(2, 6, 23, .08);
+      --radius: 14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    /* Layout */
+    .app{ min-height:100vh; display:flex; }
+    aside{
+      width: 260px;
+      background: #0b1220;
+      color: #e5e7eb;
+      padding: 18px 14px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      border-right: 1px solid rgba(255,255,255,.06);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px 16px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .logo{
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--blue), var(--orange));
+    }
+    .brand h1{ margin:0; font-size:14px; line-height:1.1; font-weight:900; }
+    .brand p{ margin:4px 0 0; font-size:12px; color: rgba(229,231,235,.75); }
+
+    nav{ margin-top: 10px; }
+    .nav-item{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      color: rgba(229,231,235,.9);
+      text-decoration:none;
+      font-size: 14px;
+      margin-bottom: 6px;
+      border: 1px solid transparent;
+    }
+    .nav-item:hover{ background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08); }
+    .nav-item.active{ background: rgba(37,99,235,.20); border-color: rgba(37,99,235,.45); }
+    .dot{ width: 10px; height: 10px; border-radius: 999px; background: rgba(255,255,255,.35); }
+    .nav-item.active .dot{ background: var(--blue); }
+
+    main{ flex:1; padding: 22px 22px 60px; }
+
+    /* Topbar */
+    .topbar{
+      display:flex;
+      align-items:flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .title h2{ margin:0; font-size: 20px; }
+    .title .sub{ margin:6px 0 0; color: var(--muted); font-size: 13px; }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .col-8{ grid-column: span 8; }
+    .col-4{ grid-column: span 4; }
+    .col-12{ grid-column: span 12; }
+
+    @media (max-width: 980px){
+      aside{ width: 230px; }
+      .col-8, .col-4{ grid-column: span 12; }
+      main{ padding: 18px 14px 60px; }
+    }
+
+    /* Filters */
+    .filters{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:end;
+    }
+    .field{ display:flex; flex-direction:column; gap:6px; min-width: 220px; flex:1; }
+    label{ font-size: 13px; color: var(--muted); }
+    select, input{
+      width:100%;
+      padding: 10px 12px;
+      border:1px solid var(--border);
+      border-radius: 12px;
+      outline:none;
+      background:#fff;
+      color: var(--text);
+      font-size: 14px;
+    }
+    select:focus, input:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+    }
+
+    .btn{
+      border:0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 900;
+      cursor:pointer;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .btn-primary{ background: var(--blue); color:#fff; }
+    .btn-primary:hover{ filter: brightness(.95); }
+    .btn-ghost{
+      background:#fff;
+      border:1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-ghost:hover{ background:#f8fafc; }
+    .btn-warn{ background: var(--orange); color:#fff; }
+    .btn-warn:hover{ filter: brightness(.95); }
+
+    /* Summary chips */
+    .chips{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .chip{
+      display:inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background:#f8fafc;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .chip.miss{ border-color: rgba(220,38,38,.35); background: rgba(220,38,38,.08); color:#991b1b; }
+    .chip.diff{ border-color: rgba(202,138,4,.35); background: rgba(202,138,4,.10); color:#854d0e; }
+    .chip.dup{ border-color: rgba(37,99,235,.35); background: rgba(37,99,235,.10); color:#1d4ed8; }
+
+    /* Table */
+    table{
+      width:100%;
+      border-collapse: collapse;
+      overflow:hidden;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background:#fff;
+      margin-top: 12px;
+    }
+    th, td{
+      padding: 10px 10px;
+      text-align:left;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th{
+      background:#f8fafc;
+      color: var(--muted);
+      font-weight: 900;
+    }
+    tr:last-child td{ border-bottom: 0; }
+
+    .tag{
+      display:inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      background:#f8fafc;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .tag.high{ border-color: rgba(220,38,38,.35); background: rgba(220,38,38,.08); color:#991b1b; }
+    .tag.med{ border-color: rgba(202,138,4,.35); background: rgba(202,138,4,.10); color:#854d0e; }
+    .tag.low{ border-color: rgba(22,163,74,.35); background: rgba(22,163,74,.08); color:#166534; }
+
+    /* Drawer (details) */
+    .drawerBack{
+      position: fixed;
+      inset: 0;
+      background: rgba(2,6,23,.55);
+      display:none;
+      align-items: stretch;
+      justify-content: flex-end;
+      z-index: 50;
+    }
+    .drawer{
+      width: min(520px, 95vw);
+      background:#fff;
+      height: 100%;
+      padding: 16px;
+      border-left: 1px solid var(--border);
+      overflow:auto;
+    }
+    .drawerTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .drawerTop h3{ margin:0; font-size: 16px; }
+    .xbtn{
+      border:1px solid var(--border);
+      background:#fff;
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-weight: 900;
+      cursor:pointer;
+    }
+    .kv{
+      margin-top: 12px;
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background:#fff;
+    }
+    .kvRow{
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--border);
+      font-size: 13px;
+    }
+    .kvRow:last-child{ border-bottom: 0; }
+    .k{ color: var(--muted); }
+    .v{ font-weight: 800; color: var(--text); text-align:right; }
+
+    .actions{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .hint{
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>GST Reconciliation</h1>
+          <p>Intelligent Engine</p>
+        </div>
+      </div>
+
+      <nav aria-label="Sidebar Navigation">
+        <a class="nav-item" href="dashboard.html"><span class="dot"></span> Dashboard</a>
+        <a class="nav-item" href="upload.html"><span class="dot"></span> Upload Data</a>
+        <a class="nav-item" href="recon.html"><span class="dot"></span> Reconciliation</a>
+        <a class="nav-item active" href="mismatch.html"><span class="dot"></span> Mismatches</a>
+        <a class="nav-item" href="risk.html"><span class="dot"></span> Vendor Risk</a>
+        <a class="nav-item" href="reports.html"><span class="dot"></span> Reports</a>
+        <a class="nav-item" href="settings.html"><span class="dot"></span> Settings</a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main>
+      <div class="topbar">
+        <div class="title">
+          <h2>Mismatch Detection</h2>
+          <div class="sub">Flag missing invoices, value differences, duplicates and suspicious patterns (demo)</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- Left: list -->
+        <section class="card col-8">
+          <div class="filters">
+            <div class="field">
+              <label for="type">Mismatch Type</label>
+              <select id="type">
+                <option value="all" selected>All</option>
+                <option value="missing">Missing Invoice</option>
+                <option value="value">Value Mismatch</option>
+                <option value="duplicate">Duplicate Invoice</option>
+                <option value="fake">Suspected Fake Vendor</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="risk">Risk Level</label>
+              <select id="risk">
+                <option value="all" selected>All</option>
+                <option value="high">High</option>
+                <option value="med">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="q">Search (GSTIN / Invoice)</label>
+              <input id="q" type="text" placeholder="e.g., 27AABCU... or INV-1023" />
+            </div>
+
+            <button class="btn btn-primary" id="applyBtn">Apply</button>
+            <button class="btn btn-ghost" id="clearBtn">Clear</button>
+          </div>
+
+          <div class="chips" id="chips">
+            <span class="chip miss" id="cMissing">Missing: 0</span>
+            <span class="chip diff" id="cValue">Value mismatch: 0</span>
+            <span class="chip dup" id="cDup">Duplicate: 0</span>
+          </div>
+
+          <table aria-label="Mismatch list">
+            <thead>
+              <tr>
+                <th style="width:160px;">Mismatch Type</th>
+                <th>GSTIN</th>
+                <th>Invoice No</th>
+                <th style="width:120px;">Risk</th>
+                <th style="width:160px;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+
+          <div class="actions">
+            <button class="btn btn-warn" id="goRiskBtn">Run Risk / AI →</button>
+            <button class="btn btn-ghost" id="exportBtn">Export CSV (Demo)</button>
+          </div>
+        </section>
+
+        <!-- Right: explanation -->
+        <aside class="card col-4">
+          <div class="hint">
+            <b>How to explain to judges:</b><br />
+            “We don’t just match invoices. We classify mismatch types and attach a preliminary risk tag.
+            Next, the AI layer uses vendor behavior and network signals to assign a final risk score.”
+          </div>
+
+          <div class="hint" style="margin-top:12px;">
+            <b>Typical mismatch rules:</b>
+            <ul style="margin:8px 0 0 18px; padding:0;">
+              <li>Invoice in GSTR-1 but not in 2B → <b>Missing</b></li>
+              <li>Same invoice twice → <b>Duplicate</b></li>
+              <li>GST amount differs beyond tolerance → <b>Value mismatch</b></li>
+              <li>Vendor shows filing anomalies → <b>Suspected fake</b></li>
+            </ul>
+          </div>
+
+          <div class="actions" style="margin-top:12px;">
+            <button class="btn btn-primary" onclick="window.location.href='risk.html'">Go to Vendor Risk</button>
+            <button class="btn btn-ghost" onclick="window.location.href='recon.html'">Back to Reconciliation</button>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <!-- Details Drawer -->
+  <div class="drawerBack" id="drawerBack" aria-hidden="true">
+    <div class="drawer" role="dialog" aria-modal="true" aria-label="Mismatch details">
+      <div class="drawerTop">
+        <h3 id="dTitle">Mismatch Details</h3>
+        <button class="xbtn" id="closeBtn">✕</button>
+      </div>
+
+      <div class="kv" id="kv"></div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="markReviewBtn">Mark as Review</button>
+        <button class="btn btn-ghost" id="createCaseBtn">Create Case (Demo)</button>
+      </div>
+
+      <div class="hint">
+        In real system, these buttons would generate <b>audit trail</b>, assign to officer/CA,
+        and store evidence for notice / ITC reversal workflow.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Demo dataset
+    const data = [
+      {type:"Missing Invoice", typeKey:"missing", gstin:"29BBBCD1111K1Z2", invoice:"S-2209", risk:"High", note:"In GSTR-1 but not in GSTR-2B", itc:"₹16,200", amount:"₹90,000", vendor:"Vendor A"},
+      {type:"Value Mismatch", typeKey:"value", gstin:"27AABCU9603R1ZV", invoice:"A-7781", risk:"Medium", note:"GST differs by ₹40 (beyond tolerance)", itc:"₹8,100", amount:"₹45,000", vendor:"Vendor B"},
+      {type:"Duplicate Invoice", typeKey:"duplicate", gstin:"36AAAAA0000A1Z5", invoice:"TAX-88", risk:"Low", note:"Same invoice appears twice in register", itc:"₹4,500", amount:"₹25,000", vendor:"Vendor C"},
+      {type:"Missing Invoice", typeKey:"missing", gstin:"07CCCCC2222C1Z9", invoice:"DEL-19", risk:"Medium", note:"Not found in purchase register", itc:"₹2,700", amount:"₹15,000", vendor:"Vendor D"},
+      {type:"Suspected Fake Vendor", typeKey:"fake", gstin:"19DDDDD3333D1Z7", invoice:"FV-401", risk:"High", note:"Vendor filing anomalies + sudden ITC spike", itc:"₹52,000", amount:"₹2,88,000", vendor:"Vendor E"},
+      {type:"Value Mismatch", typeKey:"value", gstin:"36ABCDE1234F1Z5", invoice:"INV-1099", risk:"Low", note:"Minor rounding difference (monitor)", itc:"₹1,080", amount:"₹6,000", vendor:"Vendor F"},
+    ];
+
+    const tbody = document.getElementById("tbody");
+    const typeEl = document.getElementById("type");
+    const riskEl = document.getElementById("risk");
+    const qEl = document.getElementById("q");
+
+    const cMissing = document.getElementById("cMissing");
+    const cValue = document.getElementById("cValue");
+    const cDup = document.getElementById("cDup");
+
+    const drawerBack = document.getElementById("drawerBack");
+    const kv = document.getElementById("kv");
+    const dTitle = document.getElementById("dTitle");
+
+    const exportBtn = document.getElementById("exportBtn");
+    const goRiskBtn = document.getElementById("goRiskBtn");
+
+    function tag(risk){
+      const cls = risk === "High" ? "high" : (risk === "Medium" ? "med" : "low");
+      return `<span class="tag ${cls}">${risk}</span>`;
+    }
+
+    function render(rows){
+      // counts
+      const missing = rows.filter(x => x.typeKey === "missing").length;
+      const value = rows.filter(x => x.typeKey === "value").length;
+      const dup = rows.filter(x => x.typeKey === "duplicate").length;
+      cMissing.textContent = `Missing: ${missing}`;
+      cValue.textContent = `Value mismatch: ${value}`;
+      cDup.textContent = `Duplicate: ${dup}`;
+
+      tbody.innerHTML = rows.map((r, idx) => `
+        <tr>
+          <td>${r.type}</td>
+          <td>${r.gstin}</td>
+          <td>${r.invoice}</td>
+          <td>${tag(r.risk)}</td>
+          <td>
+            <button class="btn btn-ghost" style="padding:8px 10px; font-size:13px;" onclick="openDrawer(${idx})">
+              View Details
+            </button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function apply(){
+      const t = typeEl.value;
+      const r = riskEl.value;
+      const q = qEl.value.trim().toLowerCase();
+
+      const filtered = data.filter(x => {
+        const okType = (t === "all") || (x.typeKey === t);
+        const okRisk = (r === "all") || (x.risk.toLowerCase() === r);
+        const okQ = !q || x.gstin.toLowerCase().includes(q) || x.invoice.toLowerCase().includes(q);
+        return okType && okRisk && okQ;
+      });
+
+      render(filtered);
+    }
+
+    function openDrawer(indexInFiltered){
+      // We re-find based on current filters to match index
+      const t = typeEl.value;
+      const r = riskEl.value;
+      const q = qEl.value.trim().toLowerCase();
+      const filtered = data.filter(x => {
+        const okType = (t === "all") || (x.typeKey === t);
+        const okRisk = (r === "all") || (x.risk.toLowerCase() === r);
+        const okQ = !q || x.gstin.toLowerCase().includes(q) || x.invoice.toLowerCase().includes(q);
+        return okType && okRisk && okQ;
+      });
+      const item = filtered[indexInFiltered];
+      if (!item) return;
+
+      dTitle.textContent = `${item.type} • ${item.invoice}`;
+      kv.innerHTML = `
+        <div class="kvRow"><div class="k">GSTIN</div><div class="v">${item.gstin}</div></div>
+        <div class="kvRow"><div class="k">Invoice No</div><div class="v">${item.invoice}</div></div>
+        <div class="kvRow"><div class="k">Vendor</div><div class="v">${item.vendor}</div></div>
+        <div class="kvRow"><div class="k">Amount</div><div class="v">${item.amount}</div></div>
+        <div class="kvRow"><div class="k">ITC Impact</div><div class="v">${item.itc}</div></div>
+        <div class="kvRow"><div class="k">Risk</div><div class="v">${item.risk}</div></div>
+        <div class="kvRow"><div class="k">Reason</div><div class="v">${item.note}</div></div>
+      `;
+
+      drawerBack.style.display = "flex";
+      drawerBack.setAttribute("aria-hidden","false");
+    }
+
+    function closeDrawer(){
+      drawerBack.style.display = "none";
+      drawerBack.setAttribute("aria-hidden","true");
+    }
+
+    function toCSV(rows){
+      const header = ["MismatchType","GSTIN","InvoiceNo","Risk","Reason","Amount","ITCImpact","Vendor"];
+      const lines = [header.join(",")];
+      rows.forEach(r => {
+        const row = [r.type, r.gstin, r.invoice, r.risk, r.note, r.amount, r.itc, r.vendor]
+          .map(x => `"${String(x).replaceAll('"','""')}"`).join(",");
+        lines.push(row);
+      });
+      return lines.join("\n");
+    }
+
+    document.getElementById("applyBtn").addEventListener("click", apply);
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      typeEl.value = "all";
+      riskEl.value = "all";
+      qEl.value = "";
+      apply();
+    });
+
+    document.getElementById("closeBtn").addEventListener("click", closeDrawer);
+    drawerBack.addEventListener("click", (e) => {
+      if (e.target === drawerBack) closeDrawer();
+    });
+
+    document.getElementById("markReviewBtn").addEventListener("click", () => {
+      alert("✅ Marked for review (demo). This would create an audit trail entry.");
+      closeDrawer();
+    });
+    document.getElementById("createCaseBtn").addEventListener("click", () => {
+      alert("📌 Case created (demo). In real system: assign officer/CA and attach evidence.");
+      closeDrawer();
+    });
+
+    exportBtn.addEventListener("click", () => {
+      // export current filtered view
+      const t = typeEl.value;
+      const r = riskEl.value;
+      const q = qEl.value.trim().toLowerCase();
+      const filtered = data.filter(x => {
+        const okType = (t === "all") || (x.typeKey === t);
+        const okRisk = (r === "all") || (x.risk.toLowerCase() === r);
+        const okQ = !q || x.gstin.toLowerCase().includes(q) || x.invoice.toLowerCase().includes(q);
+        return okType && okRisk && okQ;
+      });
+
+      const csv = toCSV(filtered);
+      const blob = new Blob([csv], {type: "text/csv;charset=utf-8;"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "mismatches_demo.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    goRiskBtn.addEventListener("click", () => window.location.href = "risk.html");
+
+    // Init
+    apply();
+  </script>
+</body>
+</html>

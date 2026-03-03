@@ -484,140 +484,192 @@
     </main>
   </div>
 
-  <script>
-    // --- Basic format check + status updates ---
-    const allowedExt = ["csv","xlsx","xls","json"];
+<script>
+  // --- Basic format check + status updates ---
+  const allowedExt = ["csv","xlsx","xls","json"];
 
-    function extOk(file){
-      const name = (file?.name || "").toLowerCase();
-      const parts = name.split(".");
-      const ext = parts.length > 1 ? parts.pop() : "";
-      return allowedExt.includes(ext);
-    }
+  function extOk(file){
+    const name = (file?.name || "").toLowerCase();
+    const parts = name.split(".");
+    const ext = parts.length > 1 ? parts.pop() : "";
+    return allowedExt.includes(ext);
+  }
 
-    function setChip(elId, cls, msg){
-      const el = document.getElementById(elId);
-      if (!el) return;
-      el.innerHTML = `<span class="chip ${cls}">${msg}</span>`;
-    }
+  function setChip(elId, cls, msg){
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.innerHTML = `<span class="chip ${cls}">${msg}</span>`;
+  }
 
-    function bindFile(inputId, statusId){
-      const input = document.getElementById(inputId);
-      if (!input) return;
+  function bindFile(inputId, statusId){
+    const input = document.getElementById(inputId);
+    if (!input) return;
 
-      input.addEventListener("change", () => {
-        const f = input.files && input.files[0];
-        if (!f){
-          setChip(statusId, "", "No file selected");
-          return;
-        }
-        if (!extOk(f)){
-          setChip(statusId, "bad", `Invalid format: ${f.name}`);
-          input.value = "";
-          return;
-        }
-        setChip(statusId, "ok", `Selected: ${f.name}`);
-      });
-    }
+    input.addEventListener("change", () => {
+      const f = input.files && input.files[0];
+      if (!f){
+        setChip(statusId, "", "No file selected");
+        return;
+      }
+      if (!extOk(f)){
+        setChip(statusId, "bad", `Invalid format: ${f.name}`);
+        input.value = "";
+        return;
+      }
+      setChip(statusId, "ok", `Selected: ${f.name}`);
+    });
+  }
 
-    bindFile("gstr1","st-gstr1");
-    bindFile("gstr3b","st-gstr3b");
-    bindFile("invoice","st-inv");
+  bindFile("gstr1","st-gstr1");
+  bindFile("gstr3b","st-gstr3b");
+  bindFile("invoice","st-inv");
 
-    // --- GSTR-2B Auto-fill (UI simulation) ---
-    const gstr1 = document.getElementById("gstr1");
-    const gstr2bAuto = document.getElementById("gstr2bAuto");
+  // --- GSTR-2B Auto-fill (UI simulation) ---
+  const gstr1 = document.getElementById("gstr1");
+  const gstr2bAuto = document.getElementById("gstr2bAuto");
+  const submitBtn = document.querySelector('#uploadForm button[type="submit"]');
 
-    gstr1.addEventListener("change", () => {
-      const f = gstr1.files && gstr1.files[0];
-      if (!f || !extOk(f)) return;
+  let gstr2bState = "idle"; // idle | generating | done
 
-      setChip("st-gstr2b", "auto", "Generating from GSTR-1...");
-      gstr2bAuto.value = "Generating...";
+  function setSubmitDisabled(disabled){
+    if (!submitBtn) return;
+    submitBtn.disabled = disabled;
+    submitBtn.style.opacity = disabled ? "0.7" : "1";
+    submitBtn.style.cursor = disabled ? "not-allowed" : "pointer";
+  }
 
+  function generate2B(){
+    const f = gstr1.files && gstr1.files[0];
+    if (!f || !extOk(f)) return Promise.resolve(false);
+
+    gstr2bState = "generating";
+    setChip("st-gstr2b", "auto", "Generating from GSTR-1...");
+    gstr2bAuto.value = "Generating...";
+    setSubmitDisabled(true);
+
+    return new Promise((resolve) => {
       setTimeout(() => {
+        gstr2bState = "done";
         setChip("st-gstr2b", "auto", "Generated ✅ (Auto-filled)");
         gstr2bAuto.value = "Generated ✅";
+        setSubmitDisabled(false);
+        resolve(true);
       }, 900);
     });
+  }
 
-    // --- Workflow unlock (demo) ---
-    function unlockNextStep(){
-      const s1 = document.getElementById("s1");
-      const s2 = document.getElementById("s2");
+  gstr1.addEventListener("change", () => {
+    const f = gstr1.files && gstr1.files[0];
+    if (!f || !extOk(f)) return;
+    generate2B();
+  });
 
-      s1.classList.remove("active");
-      s1.querySelector(".badge").classList.remove("next");
-      s1.querySelector(".badge").classList.add("done");
-      s1.querySelector(".badge").textContent = "DONE";
+  // --- Workflow unlock (demo) ---
+  function unlockNextStep(caseId){
+    const s1 = document.getElementById("s1");
+    const s2 = document.getElementById("s2");
 
-      s2.classList.remove("locked");
-      s2.classList.add("active");
-      s2.querySelector(".badge").classList.remove("lock");
-      s2.querySelector(".badge").classList.add("next");
-      s2.querySelector(".badge").textContent = "NEXT";
-
-      // Redirect to next page (if you create parse.html)
-      // window.location.href = "parse.html";
+    // Mark step1 done
+    s1.classList.remove("active");
+    const b1 = s1.querySelector(".badge");
+    if (b1){
+      b1.classList.remove("next");
+      b1.classList.add("done");
+      b1.textContent = "DONE";
     }
 
-    // Demo submit: validate required + auto 2B but also call backend
-    document.getElementById("uploadForm").addEventListener("submit", (e) => {
-      e.preventDefault();
+    // Unlock step2
+    s2.classList.remove("locked");
+    s2.classList.add("active");
+    const b2 = s2.querySelector(".badge");
+    if (b2){
+      b2.classList.remove("lock");
+      b2.classList.add("next");
+      b2.textContent = "NEXT";
+    }
 
-      const g1 = document.getElementById("gstr1").files[0];
-      const g3 = document.getElementById("gstr3b").files[0];
+    // Persist progress + caseId
+    localStorage.setItem("gst_step", "parse");
+    if (caseId) localStorage.setItem("gst_caseId", caseId);
 
-      if (!g1 || !g3){
-        alert("Upload required files: GSTR-1 and GSTR-3B. (GSTR-2B auto-fills)");
-        return;
-      }
-      if (gstr2bAuto.value !== "Generated ✅"){
-        alert("GSTR-2B is still generating. Please wait.");
-        return;
-      }
+    // ✅ Actually go to parse page
+    window.location.href = `parse.html?caseId=${encodeURIComponent(caseId || "")}`;
+  }
 
-      const token = localStorage.getItem('token');
-      if (!token) {
-        alert('Session expired. Please login again.');
-        window.location.href = 'login.html';
-        return;
-      }
+  // Demo submit: validate required + wait for 2B + call backend
+  document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      const formData = new FormData(e.target);
-      fetch('/api/upload', {
+    const g1 = document.getElementById("gstr1").files[0];
+    const g3 = document.getElementById("gstr3b").files[0];
+
+    if (!g1 || !g3){
+      alert("Upload required files: GSTR-1 and GSTR-3B. (GSTR-2B auto-fills)");
+      return;
+    }
+
+    // ✅ If 2B not done, wait for it (prevents the “still generating” block)
+    if (gstr2bState !== "done"){
+      await generate2B();
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Session expired. Please login again.');
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const formData = new FormData(e.target);
+    setSubmitDisabled(true);
+
+    try {
+      const r = await fetch('/api/upload', {
         method:'POST',
-        headers: {
-          'Authorization': 'Bearer ' + token
-        },
+        headers: { 'Authorization': 'Bearer ' + token },
         body: formData
-      })
-        .then(r => r.json())
-        .then(resp => {
-          console.log('upload response', resp);
-          alert("✅ Upload validated. Next step unlocked: Parse & Clean.");
-          unlockNextStep();
-        })
-        .catch(err => {
-          alert('Upload failed: ' + err);
-        });
-    });
+      });
 
-    // Reset
-    document.getElementById("uploadForm").addEventListener("reset", () => {
-      setTimeout(() => {
-        setChip("st-gstr1","", "No file selected");
-        setChip("st-gstr3b","", "No file selected");
-        setChip("st-inv","", "No file selected");
-        setChip("st-gstr2b","auto", "Waiting for GSTR-1 upload");
-        gstr2bAuto.value = "Not generated yet";
-      }, 0);
-    });
+      const ct = r.headers.get("content-type") || "";
+      const data = ct.includes("application/json") ? await r.json() : await r.text();
 
-    // Prevent clicking locked steps
-    document.querySelectorAll(".step.locked").forEach(el => {
-      el.addEventListener("click", () => alert("Complete the current step first."));
-    });
-  </script>
+      if (!r.ok) {
+        const msg = typeof data === "string" ? data : (data.message || "Upload failed");
+        throw new Error(msg);
+      }
+
+      // Determine a caseId from backend response (use uploaded file id) and continue
+      const caseId = (data.files && data.files.gstr1 && data.files.gstr1.id)
+        || (data.files && data.files.gstr3b && data.files.gstr3b.id)
+        || Date.now().toString();
+      alert("✅ Upload validated. Next step: Parse & Clean.");
+      unlockNextStep(caseId);
+
+    } catch (err) {
+      alert("Upload failed: " + err.message);
+      setSubmitDisabled(false);
+    }
+  });
+
+  // Reset
+  document.getElementById("uploadForm").addEventListener("reset", () => {
+    setTimeout(() => {
+      setChip("st-gstr1","", "No file selected");
+      setChip("st-gstr3b","", "No file selected");
+      setChip("st-inv","", "No file selected");
+      setChip("st-gstr2b","auto", "Waiting for GSTR-1 upload");
+      gstr2bAuto.value = "Not generated yet";
+      gstr2bState = "idle";
+      setSubmitDisabled(false);
+      localStorage.removeItem("gst_step");
+      localStorage.removeItem("gst_caseId");
+    }, 0);
+  });
+
+  // Prevent clicking locked steps
+  document.querySelectorAll(".step.locked").forEach(el => {
+    el.addEventListener("click", () => alert("Complete the current step first."));
+  });
+</script>
 </body>
 </html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - GST Reconciliation</title>
+
+<style>
+:root{
+  --bg:#f6f7fb;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --border:#e2e8f0;
+  --blue:#2563eb;
+  --orange:#f97316;
+  --shadow:0 10px 30px rgba(2,6,23,.08);
+}
+
+body{
+  margin:0;
+  font-family: system-ui;
+  background:linear-gradient(180deg,#fff 0%,var(--bg) 100%);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+.card{
+  background:var(--card);
+  padding:28px;
+  border-radius:14px;
+  width:340px;
+  box-shadow:var(--shadow);
+  border:1px solid var(--border);
+}
+
+.logo{
+  width:50px;
+  height:50px;
+  border-radius:12px;
+  background:linear-gradient(135deg,var(--blue),var(--orange));
+  margin:auto;
+}
+
+h1{
+  text-align:center;
+  margin:10px 0 4px;
+}
+.sub{
+  text-align:center;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  margin-top:14px;
+}
+label{
+  font-size:13px;
+  color:var(--muted);
+}
+input,select{
+  padding:10px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  margin-top:4px;
+}
+
+button{
+  margin-top:18px;
+  width:100%;
+  padding:11px;
+  border:0;
+  border-radius:12px;
+  background:var(--blue);
+  color:white;
+  font-weight:600;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+<div class="logo"></div>
+<h1>Login</h1>
+<p class="sub">Intelligent GST Reconciliation</p>
+
+<form id="login-form">
+<div class="field">
+<label id="label-id">User ID</label>
+<select id="role" required>
+<option value="">Select Role</option>
+<option value="Govt">Government Officer</option>
+<option value="Accountant">CA / Accountant</option>
+<option value="User">Taxpayer</option>
+</select>
+</div>
+
+<div class="field">
+<label>ID</label>
+<input id="userid" type="text" placeholder="Enter ID" required>
+</div>
+
+<div class="field">
+<label>Password</label>
+<input type="password" placeholder="Enter password" required>
+</div>
+
+<button type="submit">Sign In</button>
+<p style="text-align:center; margin-top:16px; font-size:13px;">
+  <a href="forgot-password.html" style="color:var(--blue); text-decoration:none;">Forgot Password?</a>
+</p>
+<p style="text-align:center; margin-top:8px; font-size:13px; color:var(--muted);">
+  Don't have an account? <a href="register.html" style="color:var(--blue); text-decoration:none;">Register here</a>
+</p>
+</div>
+
+<script src="login.js"></script>
+</body>
+</html>

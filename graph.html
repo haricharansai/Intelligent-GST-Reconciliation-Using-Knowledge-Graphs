@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Knowledge Graph - GST Reconciliation Engine</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --blue:#2563eb;
+      --orange:#f97316;
+      --green:#16a34a;
+      --red:#dc2626;
+      --shadow: 0 10px 30px rgba(2, 6, 23, .08);
+      --radius: 14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    /* Layout */
+    .app{ min-height:100vh; display:flex; }
+    aside{
+      width: 270px;
+      background: #0b1220;
+      color: #e5e7eb;
+      padding: 18px 14px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      border-right: 1px solid rgba(255,255,255,.06);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px 16px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .logo{
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--blue), var(--orange));
+    }
+    .brand h1{ margin:0; font-size:14px; line-height:1.1; font-weight:900; }
+    .brand p{ margin:4px 0 0; font-size:12px; color: rgba(229,231,235,.75); }
+
+    nav{ margin-top: 10px; }
+    .nav-item{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      color: rgba(229,231,235,.9);
+      text-decoration:none;
+      font-size: 14px;
+      margin-bottom: 6px;
+      border: 1px solid transparent;
+      transition: .15s;
+    }
+    .nav-item:hover{ background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08); }
+    .nav-item.active{ background: rgba(37,99,235,.20); border-color: rgba(37,99,235,.45); }
+    .dot{ width: 10px; height: 10px; border-radius: 999px; background: rgba(255,255,255,.35); }
+    .nav-item.active .dot{ background: var(--blue); }
+
+    /* Workflow steps */
+    .wf{
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .wf h3{
+      margin:0 10px 10px;
+      font-size: 12px;
+      color: rgba(229,231,235,.75);
+      letter-spacing: .4px;
+      text-transform: uppercase;
+    }
+    .step{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap:10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(229,231,235,.9);
+      font-size: 13px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .step.locked{ opacity: .55; cursor: not-allowed; }
+    .step.active{
+      border-color: rgba(37,99,235,.55);
+      background: rgba(37,99,235,.18);
+    }
+    .badge{
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      color: rgba(229,231,235,.85);
+      white-space: nowrap;
+    }
+    .badge.done{ border-color: rgba(22,163,74,.35); background: rgba(22,163,74,.12); }
+    .badge.next{ border-color: rgba(249,115,22,.35); background: rgba(249,115,22,.12); }
+    .badge.lock{ border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.06); }
+
+    main{ flex:1; padding: 22px 22px 60px; }
+
+    /* Topbar */
+    .topbar{
+      display:flex;
+      align-items:flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .title h2{ margin:0; font-size: 20px; }
+    .title .sub{ margin:6px 0 0; color: var(--muted); font-size: 13px; }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .col-8{ grid-column: span 8; }
+    .col-4{ grid-column: span 4; }
+    .col-12{ grid-column: span 12; }
+    @media (max-width: 980px){
+      aside{ width: 230px; }
+      .col-8, .col-4{ grid-column: span 12; }
+      main{ padding: 18px 14px 60px; }
+    }
+
+    /* Controls */
+    .controls{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:end;
+      margin-top: 6px;
+    }
+    .field{ display:flex; flex-direction:column; gap:6px; min-width: 220px; flex:1; }
+    label{ font-size: 13px; color: var(--muted); }
+    input, select{
+      width:100%;
+      padding: 10px 12px;
+      border:1px solid var(--border);
+      border-radius: 12px;
+      outline:none;
+      background:#fff;
+      color: var(--text);
+      font-size: 14px;
+    }
+    input:focus, select:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+    }
+    .btn{
+      border:0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 900;
+      cursor:pointer;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .btn-primary{ background: var(--blue); color:#fff; }
+    .btn-primary:hover{ filter: brightness(.95); }
+    .btn-ghost{
+      background:#fff;
+      border:1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-ghost:hover{ background:#f8fafc; }
+
+    /* Progress */
+    .progressBox{
+      margin-top: 12px;
+      border: 1px dashed var(--border);
+      background:#f8fafc;
+      border-radius: 14px;
+      padding: 12px;
+      display:none;
+    }
+    .bar{
+      height: 10px;
+      background:#e2e8f0;
+      border-radius: 999px;
+      overflow:hidden;
+      margin-top: 10px;
+    }
+    .bar > div{
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--blue), var(--orange));
+      transition: width .3s;
+    }
+    .muted{ color: var(--muted); font-size: 12px; line-height: 1.55; }
+
+    /* Metrics */
+    .metrics{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 860px){ .metrics{ grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 520px){ .metrics{ grid-template-columns: 1fr; } }
+    .metric{
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background:#fff;
+    }
+    .metric .label{ color: var(--muted); font-size: 12px; }
+    .metric .value{ font-size: 22px; font-weight: 900; margin-top: 6px; }
+
+    /* Graph preview */
+    .graphBox{
+      margin-top: 12px;
+      border:1px solid var(--border);
+      border-radius: 14px;
+      background:#fff;
+      padding: 14px;
+    }
+    .legend{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .lg{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border:1px solid var(--border);
+      border-radius: 999px;
+      background:#f8fafc;
+    }
+    .dotN{
+      width:10px;height:10px;border-radius:999px;
+      background:#94a3b8;
+    }
+    .dotN.vendor{ background: var(--orange); }
+    .dotN.taxpayer{ background: var(--blue); }
+    .dotN.invoice{ background: var(--green); }
+
+    pre{
+      margin: 10px 0 0;
+      padding: 12px;
+      background: #0b1220;
+      color: #e5e7eb;
+      border-radius: 12px;
+      overflow:auto;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    /* Right panel */
+    .summary h3{ margin:0 0 8px; font-size: 14px; }
+    .summary p{ margin:0 0 10px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .rule{
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fff;
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    ul{ margin: 8px 0 0 18px; padding:0; }
+    .note{
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .pill{
+      display:inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background:#f8fafc;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .pill.ok{ border-color: rgba(22,163,74,.35); background: rgba(22,163,74,.08); color:#166534; }
+    .pill.bad{ border-color: rgba(220,38,38,.35); background: rgba(220,38,38,.08); color:#991b1b; }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>GST Reconciliation</h1>
+          <p>Workflow Demo</p>
+        </div>
+      </div>
+
+      <nav>
+        <a class="nav-item" href="upload.html"><span class="dot"></span> Upload Data</a>
+        <a class="nav-item" href="parse.html"><span class="dot"></span> Parsing & Cleaning</a>
+        <a class="nav-item active" href="graph.html"><span class="dot"></span> Knowledge Graph</a>
+        <a class="nav-item" href="recon.html"><span class="dot"></span> Invoice Matching</a>
+        <a class="nav-item" href="mismatch.html"><span class="dot"></span> Mismatch Detection</a>
+        <a class="nav-item" href="risk.html"><span class="dot"></span> Risk / AI</a>
+        <a class="nav-item" href="reports.html"><span class="dot"></span> Reports</a>
+      </nav>
+
+      <!-- Workflow stepper -->
+      <div class="wf">
+        <h3>Workflow</h3>
+
+        <div class="step" id="s1">
+          <span>1. Upload GST Data</span>
+          <span class="badge done">DONE</span>
+        </div>
+
+        <div class="step" id="s2">
+          <span>2. Parse & Clean</span>
+          <span class="badge done">DONE</span>
+        </div>
+
+        <div class="step active" id="s3">
+          <span>3. Knowledge Graph</span>
+          <span class="badge next">CURRENT</span>
+        </div>
+
+        <div class="step locked" id="s4" title="Complete graph build first">
+          <span>4. Reconcile</span>
+          <span class="badge lock">LOCKED</span>
+        </div>
+
+        <div class="step locked" id="s5" title="Complete recon first">
+          <span>5. Mismatches</span>
+          <span class="badge lock">LOCKED</span>
+        </div>
+
+        <div class="step locked" id="s6" title="Complete mismatch first">
+          <span>6. Risk / AI</span>
+          <span class="badge lock">LOCKED</span>
+        </div>
+
+        <div class="step locked" id="s7" title="Complete risk first">
+          <span>7. Reports</span>
+          <span class="badge lock">LOCKED</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main>
+      <div class="topbar">
+        <div class="title">
+          <h2>Knowledge Graph Creation</h2>
+          <div class="sub">Convert cleaned invoices into a graph: Vendor ↔ Taxpayer ↔ Invoice relationships.</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- Left -->
+        <section class="card col-8">
+          <div class="controls">
+            <div class="field">
+              <label for="period">Return Period</label>
+              <input id="period" type="text" placeholder="e.g., 2026-02" value="2026-02" />
+            </div>
+
+            <button class="btn btn-primary" id="buildBtn">Build Knowledge Graph</button>
+            <button class="btn btn-ghost" id="refreshBtn">Refresh Stats</button>
+          </div>
+
+          <div class="progressBox" id="progressBox">
+            <div class="muted" id="progressText">Preparing…</div>
+            <div class="bar"><div id="barFill"></div></div>
+          </div>
+
+          <div class="metrics" id="metrics" style="display:none;">
+            <div class="metric">
+              <div class="label">Vendors</div>
+              <div class="value" id="mVendors">0</div>
+            </div>
+            <div class="metric">
+              <div class="label">Taxpayers</div>
+              <div class="value" id="mTaxpayers">0</div>
+            </div>
+            <div class="metric">
+              <div class="label">Invoices</div>
+              <div class="value" id="mInvoices">0</div>
+            </div>
+            <div class="metric">
+              <div class="label">Relationships</div>
+              <div class="value" id="mRels">0</div>
+            </div>
+          </div>
+
+          <div class="graphBox" id="graphBox" style="display:none;">
+            <div class="muted"><b>Graph preview (demo):</b> sample nodes & edges created</div>
+
+            <div class="legend">
+              <div class="lg"><span class="dotN vendor"></span> Vendor</div>
+              <div class="lg"><span class="dotN taxpayer"></span> Taxpayer</div>
+              <div class="lg"><span class="dotN invoice"></span> Invoice</div>
+              <div class="lg"><span class="dotN"></span> Relationship</div>
+            </div>
+
+            <pre id="preview"></pre>
+          </div>
+
+          <div class="controls" style="margin-top:12px;">
+            <button class="btn btn-primary" id="goReconBtn" disabled>Proceed to Reconciliation →</button>
+          </div>
+
+          <div class="note">
+            After graph build succeeds, next step <b>Reconciliation</b> unlocks automatically.
+          </div>
+        </section>
+
+        <!-- Right -->
+        <aside class="card col-4 summary">
+          <h3>Graph model</h3>
+          <p>This step creates a knowledge graph used to detect suspicious vendor networks and risk signals.</p>
+
+          <div class="rule">
+            <b>Nodes:</b>
+            <ul>
+              <li>Vendor (GSTIN)</li>
+              <li>Taxpayer (GSTIN)</li>
+              <li>Invoice (InvoiceNo + Date)</li>
+            </ul>
+          </div>
+
+          <div class="rule">
+            <b>Relationships:</b>
+            <ul>
+              <li>Invoice → SUPPLIED_BY → Vendor</li>
+              <li>Invoice → CLAIMED_BY → Taxpayer</li>
+              <li>Vendor → SUPPLIED_TO → Taxpayer</li>
+            </ul>
+          </div>
+
+          <div class="rule">
+            <b>Hackathon mode:</b>
+            <ul>
+              <li>If backend graph build fails, show demo stats</li>
+              <li>Still allow reconciliation to continue</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ---------- Workflow unlock helpers ----------
+    function unlockReconStep(){
+      const s4 = document.getElementById("s4");
+      s4.classList.remove("locked");
+      s4.classList.add("active");
+      const b = s4.querySelector(".badge");
+      b.classList.remove("lock");
+      b.classList.add("next");
+      b.textContent = "NEXT";
+      document.getElementById("goReconBtn").disabled = false;
+    }
+
+    // prevent clicking locked steps
+    document.querySelectorAll(".step.locked").forEach(el => {
+      el.addEventListener("click", () => alert("Complete the current step first."));
+    });
+
+    // ---------- UI helpers ----------
+    function showProgress(msg, pct){
+      const box = document.getElementById("progressBox");
+      box.style.display = "block";
+      document.getElementById("progressText").textContent = msg;
+      document.getElementById("barFill").style.width = pct + "%";
+    }
+
+    function renderStats(data){
+      // expected:
+      // { vendors, taxpayers, invoices, relationships, previewText }
+      document.getElementById("metrics").style.display = "grid";
+      document.getElementById("mVendors").textContent = data.vendors ?? 0;
+      document.getElementById("mTaxpayers").textContent = data.taxpayers ?? 0;
+      document.getElementById("mInvoices").textContent = data.invoices ?? 0;
+      document.getElementById("mRels").textContent = data.relationships ?? 0;
+
+      document.getElementById("graphBox").style.display = "block";
+      document.getElementById("preview").textContent = data.previewText || "";
+
+      unlockReconStep();
+    }
+
+    // ---------- Demo fallback ----------
+    function dummyStats(){
+      return {
+        vendors: 14,
+        taxpayers: 1,
+        invoices: 110,
+        relationships: 330,
+        previewText:
+`(Invoice:S-2209)-[:SUPPLIED_BY]->(Vendor:29BBBCD1111K1Z2)
+(Invoice:S-2209)-[:CLAIMED_BY]->(Taxpayer:36AAAAA0000A1Z5)
+(Vendor:29BBBCD1111K1Z2)-[:SUPPLIED_TO]->(Taxpayer:36AAAAA0000A1Z5)
+
+(Invoice:A-7781)-[:SUPPLIED_BY]->(Vendor:27AABCU9603R1ZV)
+(Invoice:A-7781)-[:CLAIMED_BY]->(Taxpayer:36AAAAA0000A1Z5)
+(Vendor:27AABCU9603R1ZV)-[:SUPPLIED_TO]->(Taxpayer:36AAAAA0000A1Z5)`
+      };
+    }
+
+    async function buildGraph(){
+      const token = localStorage.getItem("token");
+      if (!token){
+        alert("Session expired. Please login again.");
+        window.location.href = "login.html";
+        return;
+      }
+
+      const period = document.getElementById("period").value.trim() || "2026-02";
+
+      showProgress("Starting graph build…", 12);
+
+      try{
+        showProgress("Connecting to Graph DB…", 28);
+
+        const res = await fetch(`/api/graph/build?period=${encodeURIComponent(period)}`, {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + token }
+        });
+
+        showProgress("Creating nodes & relationships…", 65);
+
+        if (!res.ok){
+          showProgress("Graph build failed. Using demo stats…", 90);
+          renderStats(dummyStats());
+          showProgress("Completed (Demo).", 100);
+          alert("⚠️ Graph build API failed. Showing demo stats so you can continue.");
+          return;
+        }
+
+        const json = await res.json();
+        renderStats(json.data ? json.data : json);
+
+        showProgress("Graph created successfully.", 100);
+        alert("✅ Knowledge graph built. Next step unlocked: Reconciliation.");
+      }catch(err){
+        showProgress("Backend unreachable. Using demo stats…", 90);
+        renderStats(dummyStats());
+        showProgress("Completed (Demo).", 100);
+        alert("⚠️ Backend not reachable. Showing demo graph stats so you can continue.");
+      }
+    }
+
+    async function refreshStats(){
+      const token = localStorage.getItem("token");
+      if (!token){
+        alert("Session expired. Please login again.");
+        window.location.href = "login.html";
+        return;
+      }
+
+      const period = document.getElementById("period").value.trim() || "2026-02";
+      showProgress("Refreshing graph stats…", 20);
+
+      try{
+        const res = await fetch(`/api/graph/stats?period=${encodeURIComponent(period)}`, {
+          method: "GET",
+          headers: { "Authorization": "Bearer " + token }
+        });
+
+        if (!res.ok){
+          showProgress("Stats API failed. Showing demo stats…", 85);
+          renderStats(dummyStats());
+          showProgress("Ready.", 100);
+          return;
+        }
+
+        const json = await res.json();
+        renderStats(json.data ? json.data : json);
+        showProgress("Stats updated.", 100);
+      }catch(err){
+        showProgress("Backend unreachable. Showing demo stats…", 85);
+        renderStats(dummyStats());
+        showProgress("Ready.", 100);
+      }
+    }
+
+    document.getElementById("buildBtn").addEventListener("click", buildGraph);
+    document.getElementById("refreshBtn").addEventListener("click", refreshStats);
+
+    document.getElementById("goReconBtn").addEventListener("click", () => {
+      window.location.href = "recon.html";
+    });
+  </script>
+</body>
+</html>

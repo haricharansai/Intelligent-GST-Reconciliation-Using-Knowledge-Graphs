@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reconciliation - Intelligent GST Reconciliation Engine</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --blue:#2563eb;
+      --orange:#f97316;
+      --green:#16a34a;
+      --red:#dc2626;
+      --yellow:#ca8a04;
+      --shadow: 0 10px 30px rgba(2, 6, 23, .08);
+      --radius: 14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    /* Layout */
+    .app{ min-height:100vh; display:flex; }
+    aside{
+      width: 260px;
+      background: #0b1220;
+      color: #e5e7eb;
+      padding: 18px 14px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      border-right: 1px solid rgba(255,255,255,.06);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px 16px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .logo{
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--blue), var(--orange));
+    }
+    .brand h1{ margin:0; font-size:14px; line-height:1.1; font-weight:900; }
+    .brand p{ margin:4px 0 0; font-size:12px; color: rgba(229,231,235,.75); }
+
+    nav{ margin-top: 10px; }
+    .nav-item{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      color: rgba(229,231,235,.9);
+      text-decoration:none;
+      font-size: 14px;
+      margin-bottom: 6px;
+      border: 1px solid transparent;
+    }
+    .nav-item:hover{ background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08); }
+    .nav-item.active{ background: rgba(37,99,235,.20); border-color: rgba(37,99,235,.45); }
+    .dot{ width: 10px; height: 10px; border-radius: 999px; background: rgba(255,255,255,.35); }
+    .nav-item.active .dot{ background: var(--blue); }
+
+    main{ flex:1; padding: 22px 22px 60px; }
+
+    /* Topbar */
+    .topbar{
+      display:flex;
+      align-items:flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .title h2{ margin:0; font-size: 20px; }
+    .title .sub{ margin:6px 0 0; color: var(--muted); font-size: 13px; }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .col-8{ grid-column: span 8; }
+    .col-4{ grid-column: span 4; }
+    .col-12{ grid-column: span 12; }
+
+    @media (max-width: 980px){
+      aside{ width: 230px; }
+      .col-8, .col-4{ grid-column: span 12; }
+      main{ padding: 18px 14px 60px; }
+    }
+
+    /* Controls */
+    .controls{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:end;
+    }
+    .field{ display:flex; flex-direction:column; gap:6px; min-width: 220px; flex:1; }
+    label{ font-size: 13px; color: var(--muted); }
+    select, input{
+      width:100%;
+      padding: 10px 12px;
+      border:1px solid var(--border);
+      border-radius: 12px;
+      outline:none;
+      background:#fff;
+      color: var(--text);
+      font-size: 14px;
+    }
+    select:focus, input:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+    }
+
+    /* Buttons */
+    .btn{
+      border:0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 900;
+      cursor:pointer;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .btn-primary{ background: var(--blue); color:#fff; }
+    .btn-primary:hover{ filter: brightness(.95); }
+    .btn-ghost{
+      background:#fff;
+      border:1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-ghost:hover{ background:#f8fafc; }
+    .btn-warn{
+      background: var(--orange);
+      color:#fff;
+    }
+    .btn-warn:hover{ filter: brightness(.95); }
+
+    /* Progress */
+    .progressWrap{
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background:#fff;
+    }
+    .progressHead{
+      display:flex;
+      justify-content: space-between;
+      gap:10px;
+      align-items:center;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .progressHead h3{
+      margin:0;
+      font-size: 14px;
+    }
+    .muted{ color: var(--muted); font-size: 12px; }
+    .barTrack{
+      height: 12px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      overflow:hidden;
+    }
+    .barFill{
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(37,99,235,.9), rgba(249,115,22,.85));
+      transition: width .25s ease;
+    }
+    .steps{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .chip{
+      display:inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background:#f8fafc;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .chip.ok{ border-color: rgba(22,163,74,.35); background: rgba(22,163,74,.08); color:#166534; }
+    .chip.run{ border-color: rgba(37,99,235,.35); background: rgba(37,99,235,.10); color:#1d4ed8; }
+
+    /* Summary cards */
+    .metrics{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 980px){ .metrics{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 560px){ .metrics{ grid-template-columns: 1fr; } }
+
+    .metricCard{
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background:#fff;
+    }
+    .metricCard .label{ font-size: 12px; color: var(--muted); }
+    .metricCard .value{ font-size: 22px; font-weight: 900; margin-top: 6px; }
+    .badge{
+      display:inline-block;
+      margin-top: 8px;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background:#f8fafc;
+      color: var(--muted);
+    }
+    .badge.good{ border-color: rgba(22,163,74,.35); background: rgba(22,163,74,.08); color:#166534; }
+    .badge.warn{ border-color: rgba(202,138,4,.35); background: rgba(202,138,4,.10); color:#854d0e; }
+    .badge.danger{ border-color: rgba(220,38,38,.35); background: rgba(220,38,38,.08); color:#991b1b; }
+
+    /* Table */
+    table{
+      width:100%;
+      border-collapse: collapse;
+      overflow:hidden;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background:#fff;
+      margin-top: 12px;
+    }
+    th, td{
+      padding: 10px 10px;
+      text-align:left;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th{
+      background:#f8fafc;
+      color: var(--muted);
+      font-weight: 900;
+    }
+    tr:last-child td{ border-bottom: 0; }
+    .tag{
+      display:inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      background:#f8fafc;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .tag.match{ border-color: rgba(22,163,74,.35); background: rgba(22,163,74,.08); color:#166534; }
+    .tag.miss{ border-color: rgba(220,38,38,.35); background: rgba(220,38,38,.08); color:#991b1b; }
+    .tag.diff{ border-color: rgba(202,138,4,.35); background: rgba(202,138,4,.10); color:#854d0e; }
+
+    .rightBox{
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background:#fff;
+    }
+    .rightBox h3{ margin:0 0 8px; font-size: 14px; }
+    .rightBox p{ margin:0; font-size: 12px; color: var(--muted); line-height: 1.55; }
+    .rightBox ul{ margin: 8px 0 0 18px; padding:0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+
+    .actions{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>GST Reconciliation</h1>
+          <p>Intelligent Engine</p>
+        </div>
+      </div>
+
+      <nav aria-label="Sidebar Navigation">
+        <a class="nav-item" href="dashboard.html"><span class="dot"></span> Dashboard</a>
+        <a class="nav-item" href="upload.html"><span class="dot"></span> Upload Data</a>
+        <a class="nav-item active" href="recon.html"><span class="dot"></span> Reconciliation</a>
+        <a class="nav-item" href="mismatch.html"><span class="dot"></span> Mismatches</a>
+        <a class="nav-item" href="risk.html"><span class="dot"></span> Vendor Risk</a>
+        <a class="nav-item" href="reports.html"><span class="dot"></span> Reports</a>
+        <a class="nav-item" href="settings.html"><span class="dot"></span> Settings</a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main>
+      <div class="topbar">
+        <div class="title">
+          <h2>Invoice Matching (Reconciliation Engine)</h2>
+          <div class="sub">Compare GSTR-1 vs GSTR-2B, 2B vs Purchase Register, and 3B vs ITC claimed (demo run)</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- Left: Run reconciliation -->
+        <section class="card col-8">
+          <div class="controls">
+            <div class="field">
+              <label for="period">Return Period</label>
+              <select id="period">
+                <option>Jan 2026</option>
+                <option selected>Feb 2026</option>
+                <option>Mar 2026</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="mode">Reconciliation Mode</label>
+              <select id="mode">
+                <option value="standard" selected>Standard Match (Invoice No + GSTIN + Amount)</option>
+                <option value="fuzzy">Fuzzy Match (Handles minor date/rounding diffs)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="tolerance">Amount Tolerance (₹)</label>
+              <input id="tolerance" type="number" min="0" value="10" />
+            </div>
+
+            <button class="btn btn-primary" id="runBtn">Run Reconciliation</button>
+            <button class="btn btn-ghost" id="resetBtn">Reset</button>
+          </div>
+
+          <div class="progressWrap" id="progressWrap" style="display:none;">
+            <div class="progressHead">
+              <h3 id="progressTitle">Running reconciliation…</h3>
+              <div class="muted" id="progressPct">0%</div>
+            </div>
+            <div class="barTrack"><div class="barFill" id="barFill"></div></div>
+            <div class="steps" id="stepChips">
+              <span class="chip run">Reading files</span>
+              <span class="chip">Parsing & cleaning</span>
+              <span class="chip">Matching invoices</span>
+              <span class="chip">Generating mismatch list</span>
+              <span class="chip">Done</span>
+            </div>
+          </div>
+
+          <div class="metrics" id="metrics" style="display:none;">
+            <div class="metricCard">
+              <div class="label">Total Invoices</div>
+              <div class="value" id="mTotal">0</div>
+              <span class="badge">All</span>
+            </div>
+            <div class="metricCard">
+              <div class="label">Matched</div>
+              <div class="value" id="mMatched">0</div>
+              <span class="badge good">Matched</span>
+            </div>
+            <div class="metricCard">
+              <div class="label">Missing</div>
+              <div class="value" id="mMissing">0</div>
+              <span class="badge danger">Missing</span>
+            </div>
+            <div class="metricCard">
+              <div class="label">Value Mismatch</div>
+              <div class="value" id="mDiff">0</div>
+              <span class="badge warn">Mismatch</span>
+            </div>
+          </div>
+
+          <div id="tableWrap" style="display:none;">
+            <table aria-label="Reconciliation output table">
+              <thead>
+                <tr>
+                  <th style="width:120px;">Status</th>
+                  <th>GSTIN</th>
+                  <th>Invoice No</th>
+                  <th>Invoice Date</th>
+                  <th style="width:140px;">Taxable Value</th>
+                  <th style="width:140px;">GST Amount</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody id="tbody">
+              </tbody>
+            </table>
+
+            <div class="actions">
+              <button class="btn btn-warn" id="goMismatchBtn">View Mismatches →</button>
+              <button class="btn btn-ghost" id="exportBtn">Export CSV (Demo)</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right: Explanation / Next -->
+        <aside class="card col-4">
+          <div class="rightBox">
+            <h3>What happens in this step</h3>
+            <p>
+              This page runs the core reconciliation checks and produces matched vs mismatched invoices.
+              For hackathon demo, we simulate the run and generate sample results.
+            </p>
+            <ul>
+              <li><b>GSTR-1 vs GSTR-2B:</b> checks missing invoices and value differences</li>
+              <li><b>2B vs Purchase Register:</b> checks internal vs portal differences (optional)</li>
+              <li><b>3B vs ITC claimed:</b> verifies ITC summary consistency</li>
+            </ul>
+          </div>
+
+          <div class="rightBox" style="margin-top:12px;">
+            <h3>Next step</h3>
+            <p>After reconciliation completes, go to <b>Mismatches</b> for detailed flags and actions.</p>
+            <div class="actions">
+              <button class="btn btn-primary" onclick="window.location.href='mismatch.html'">Go to Mismatches</button>
+              <button class="btn btn-ghost" onclick="window.location.href='upload.html'">Back to Upload</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const runBtn = document.getElementById("runBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const progressWrap = document.getElementById("progressWrap");
+    const barFill = document.getElementById("barFill");
+    const progressPct = document.getElementById("progressPct");
+    const progressTitle = document.getElementById("progressTitle");
+    const stepChips = document.getElementById("stepChips").querySelectorAll(".chip");
+
+    const metrics = document.getElementById("metrics");
+    const tableWrap = document.getElementById("tableWrap");
+    const tbody = document.getElementById("tbody");
+
+    const mTotal = document.getElementById("mTotal");
+    const mMatched = document.getElementById("mMatched");
+    const mMissing = document.getElementById("mMissing");
+    const mDiff = document.getElementById("mDiff");
+
+    const goMismatchBtn = document.getElementById("goMismatchBtn");
+    const exportBtn = document.getElementById("exportBtn");
+
+    let currentCSV = "";
+
+    function setChip(i, state){
+      stepChips.forEach((c, idx) => {
+        c.classList.remove("run","ok");
+        if (idx < i) c.classList.add("ok");
+        if (idx === i) c.classList.add("run");
+      });
+    }
+
+    function resetUI(){
+      progressWrap.style.display = "none";
+      metrics.style.display = "none";
+      tableWrap.style.display = "none";
+      barFill.style.width = "0%";
+      progressPct.textContent = "0%";
+      progressTitle.textContent = "Running reconciliation…";
+      tbody.innerHTML = "";
+      currentCSV = "";
+      setChip(0);
+    }
+
+    function row(status, gstin, inv, date, taxable, gst, note){
+      const tagClass = status === "Matched" ? "match" : (status === "Missing" ? "miss" : "diff");
+      return `
+        <tr>
+          <td><span class="tag ${tagClass}">${status}</span></td>
+          <td>${gstin}</td>
+          <td>${inv}</td>
+          <td>${date}</td>
+          <td>₹${taxable}</td>
+          <td>₹${gst}</td>
+          <td>${note}</td>
+        </tr>
+      `;
+    }
+
+    function toCSV(rows){
+      const header = ["Status","GSTIN","InvoiceNo","InvoiceDate","TaxableValue","GSTAmount","Note"];
+      const lines = [header.join(",")];
+      rows.forEach(r => lines.push(r.map(x => `"${String(x).replaceAll('"','""')}"`).join(",")));
+      return lines.join("\n");
+    }
+
+    runBtn.addEventListener("click", () => {
+      resetUI();
+      progressWrap.style.display = "block";
+      runBtn.disabled = true;
+
+      const steps = [
+        {pct: 15, title: "Reading uploaded files…", chip: 0},
+        {pct: 38, title: "Parsing & cleaning…", chip: 1},
+        {pct: 68, title: "Matching invoices…", chip: 2},
+        {pct: 88, title: "Generating mismatch list…", chip: 3},
+        {pct: 100, title: "Done ✅", chip: 4},
+      ];
+
+      let i = 0;
+      const timer = setInterval(() => {
+        const s = steps[i];
+        barFill.style.width = s.pct + "%";
+        progressPct.textContent = s.pct + "%";
+        progressTitle.textContent = s.title;
+        setChip(s.chip);
+
+        i++;
+        if (i >= steps.length){
+          clearInterval(timer);
+          runBtn.disabled = false;
+
+          // Demo results
+          const rows = [
+            ["Matched","36ABCDE1234F1Z5","INV-1023","2026-02-03","120000","21600","Exact match in 1 & 2B"],
+            ["Matched","36ABCDE1234F1Z5","INV-1041","2026-02-07","56000","10080","Exact match"],
+            ["Value Mismatch","27AABCU9603R1ZV","A-7781","2026-02-10","45000","8100","GST differs by ₹40 (tolerance check)"],
+            ["Missing","29BBBCD1111K1Z2","S-2209","2026-02-12","90000","16200","In GSTR-1 but not in 2B"],
+            ["Matched","27AABCU9603R1ZV","A-7790","2026-02-14","38000","6840","Exact match"],
+            ["Value Mismatch","36AAAAA0000A1Z5","TAX-88","2026-02-18","25000","4500","Taxable value differs"],
+            ["Missing","07CCCCC2222C1Z9","DEL-19","2026-02-22","15000","2700","Not found in purchase register"]
+          ];
+
+          // Summary counts
+          const total = rows.length;
+          const matched = rows.filter(r => r[0] === "Matched").length;
+          const missing = rows.filter(r => r[0] === "Missing").length;
+          const diff = rows.filter(r => r[0] === "Value Mismatch").length;
+
+          mTotal.textContent = total;
+          mMatched.textContent = matched;
+          mMissing.textContent = missing;
+          mDiff.textContent = diff;
+
+          metrics.style.display = "grid";
+          tableWrap.style.display = "block";
+
+          tbody.innerHTML = rows.map(r => row(r[0], r[1], r[2], r[3], r[4], r[5], r[6])).join("");
+
+          currentCSV = toCSV(rows);
+        }
+      }, 650);
+    });
+
+    resetBtn.addEventListener("click", resetUI);
+
+    goMismatchBtn.addEventListener("click", () => {
+      window.location.href = "mismatch.html";
+    });
+
+    exportBtn.addEventListener("click", () => {
+      if (!currentCSV){
+        alert("Run reconciliation first.");
+        return;
+      }
+      const blob = new Blob([currentCSV], {type: "text/csv;charset=utf-8;"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "reconciliation_demo.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    // Init
+    resetUI();
+  </script>
+</body>
+</html>

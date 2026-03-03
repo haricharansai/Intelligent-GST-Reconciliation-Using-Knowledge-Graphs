@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vendor Risk / AI - Intelligent GST Reconciliation Engine</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --blue:#2563eb;
+      --orange:#f97316;
+      --green:#16a34a;
+      --red:#dc2626;
+      --yellow:#ca8a04;
+      --shadow: 0 10px 30px rgba(2, 6, 23, .08);
+      --radius: 14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    /* Layout */
+    .app{ min-height:100vh; display:flex; }
+    aside{
+      width: 260px;
+      background: #0b1220;
+      color: #e5e7eb;
+      padding: 18px 14px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      border-right: 1px solid rgba(255,255,255,.06);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px 16px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .logo{
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--blue), var(--orange));
+    }
+    .brand h1{ margin:0; font-size:14px; line-height:1.1; font-weight:900; }
+    .brand p{ margin:4px 0 0; font-size:12px; color: rgba(229,231,235,.75); }
+
+    nav{ margin-top: 10px; }
+    .nav-item{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      color: rgba(229,231,235,.9);
+      text-decoration:none;
+      font-size: 14px;
+      margin-bottom: 6px;
+      border: 1px solid transparent;
+    }
+    .nav-item:hover{ background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08); }
+    .nav-item.active{ background: rgba(37,99,235,.20); border-color: rgba(37,99,235,.45); }
+    .dot{ width: 10px; height: 10px; border-radius: 999px; background: rgba(255,255,255,.35); }
+    .nav-item.active .dot{ background: var(--blue); }
+
+    main{ flex:1; padding: 22px 22px 60px; }
+
+    /* Topbar */
+    .topbar{
+      display:flex;
+      align-items:flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .title h2{ margin:0; font-size: 20px; }
+    .title .sub{ margin:6px 0 0; color: var(--muted); font-size: 13px; }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .col-8{ grid-column: span 8; }
+    .col-4{ grid-column: span 4; }
+    .col-12{ grid-column: span 12; }
+    @media (max-width: 980px){
+      aside{ width: 230px; }
+      .col-8, .col-4{ grid-column: span 12; }
+      main{ padding: 18px 14px 60px; }
+    }
+
+    /* Controls */
+    .controls{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:end;
+    }
+    .field{ display:flex; flex-direction:column; gap:6px; min-width: 220px; flex:1; }
+    label{ font-size: 13px; color: var(--muted); }
+    select, input{
+      width:100%;
+      padding: 10px 12px;
+      border:1px solid var(--border);
+      border-radius: 12px;
+      outline:none;
+      background:#fff;
+      color: var(--text);
+      font-size: 14px;
+    }
+    select:focus, input:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+    }
+
+    .btn{
+      border:0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 900;
+      cursor:pointer;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .btn-primary{ background: var(--blue); color:#fff; }
+    .btn-primary:hover{ filter: brightness(.95); }
+    .btn-ghost{
+      background:#fff;
+      border:1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-ghost:hover{ background:#f8fafc; }
+    .btn-warn{ background: var(--orange); color:#fff; }
+    .btn-warn:hover{ filter: brightness(.95); }
+
+    /* Metrics */
+    .metrics{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 680px){ .metrics{ grid-template-columns: 1fr; } }
+    .metric{
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background:#fff;
+    }
+    .metric .label{ color: var(--muted); font-size: 12px; }
+    .metric .value{ font-size: 22px; font-weight: 900; margin-top: 6px; }
+    .badge{
+      display:inline-block;
+      margin-top: 8px;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background:#f8fafc;
+      color: var(--muted);
+    }
+    .badge.low{ border-color: rgba(22,163,74,.35); background: rgba(22,163,74,.08); color:#166534; }
+    .badge.med{ border-color: rgba(202,138,4,.35); background: rgba(202,138,4,.10); color:#854d0e; }
+    .badge.high{ border-color: rgba(220,38,38,.35); background: rgba(220,38,38,.08); color:#991b1b; }
+
+    /* "Graph" (demo) */
+    .graphBox{
+      margin-top: 12px;
+      border:1px dashed var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: #f8fafc;
+    }
+    .graphHead{
+      display:flex;
+      justify-content: space-between;
+      gap:10px;
+      flex-wrap: wrap;
+      align-items:center;
+      margin-bottom: 10px;
+    }
+    .graphHead h3{ margin:0; font-size: 14px; }
+    .legend{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .legend span{
+      display:flex; align-items:center; gap:6px;
+      border:1px solid var(--border);
+      background:#fff;
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+    .dotc{ width:10px; height:10px; border-radius:999px; display:inline-block; }
+    .dotc.low{ background: rgba(22,163,74,.75); }
+    .dotc.med{ background: rgba(202,138,4,.75); }
+    .dotc.high{ background: rgba(220,38,38,.75); }
+
+    .nodes{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    @media (max-width: 980px){ .nodes{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 520px){ .nodes{ grid-template-columns: 1fr; } }
+
+    .node{
+      border:1px solid var(--border);
+      border-radius: 14px;
+      background:#fff;
+      padding: 12px;
+      cursor:pointer;
+      transition: .12s;
+    }
+    .node:hover{ transform: translateY(-1px); box-shadow: 0 10px 22px rgba(2,6,23,.08); }
+    .nodeTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap:10px;
+    }
+    .node h4{ margin:0; font-size: 13px; }
+    .node p{ margin:6px 0 0; font-size: 12px; color: var(--muted); line-height: 1.45; }
+    .pill{
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background:#f8fafc;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .pill.low{ border-color: rgba(22,163,74,.35); background: rgba(22,163,74,.08); color:#166534; }
+    .pill.med{ border-color: rgba(202,138,4,.35); background: rgba(202,138,4,.10); color:#854d0e; }
+    .pill.high{ border-color: rgba(220,38,38,.35); background: rgba(220,38,38,.08); color:#991b1b; }
+
+    /* Alerts table */
+    table{
+      width:100%;
+      border-collapse: collapse;
+      overflow:hidden;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background:#fff;
+      margin-top: 12px;
+    }
+    th, td{
+      padding: 10px 10px;
+      text-align:left;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th{
+      background:#f8fafc;
+      color: var(--muted);
+      font-weight: 900;
+    }
+    tr:last-child td{ border-bottom: 0; }
+
+    .tag{
+      display:inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      background:#f8fafc;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .tag.high{ border-color: rgba(220,38,38,.35); background: rgba(220,38,38,.08); color:#991b1b; }
+    .tag.med{ border-color: rgba(202,138,4,.35); background: rgba(202,138,4,.10); color:#854d0e; }
+    .tag.low{ border-color: rgba(22,163,74,.35); background: rgba(22,163,74,.08); color:#166534; }
+
+    /* Drawer */
+    .drawerBack{
+      position: fixed;
+      inset: 0;
+      background: rgba(2,6,23,.55);
+      display:none;
+      align-items: stretch;
+      justify-content: flex-end;
+      z-index: 50;
+    }
+    .drawer{
+      width: min(540px, 95vw);
+      background:#fff;
+      height: 100%;
+      padding: 16px;
+      border-left: 1px solid var(--border);
+      overflow:auto;
+    }
+    .drawerTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .drawerTop h3{ margin:0; font-size: 16px; }
+    .xbtn{
+      border:1px solid var(--border);
+      background:#fff;
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-weight: 900;
+      cursor:pointer;
+    }
+    .kv{
+      margin-top: 12px;
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background:#fff;
+    }
+    .kvRow{
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--border);
+      font-size: 13px;
+    }
+    .kvRow:last-child{ border-bottom: 0; }
+    .k{ color: var(--muted); }
+    .v{ font-weight: 900; color: var(--text); text-align:right; }
+
+    .hint{
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>GST Reconciliation</h1>
+          <p>AI Risk Layer</p>
+        </div>
+      </div>
+
+      <nav aria-label="Sidebar Navigation">
+        <a class="nav-item" href="dashboard.html"><span class="dot"></span> Dashboard</a>
+        <a class="nav-item" href="upload.html"><span class="dot"></span> Upload Data</a>
+        <a class="nav-item" href="recon.html"><span class="dot"></span> Reconciliation</a>
+        <a class="nav-item" href="mismatch.html"><span class="dot"></span> Mismatches</a>
+        <a class="nav-item active" href="risk.html"><span class="dot"></span> Vendor Risk</a>
+        <a class="nav-item" href="reports.html"><span class="dot"></span> Reports</a>
+        <a class="nav-item" href="settings.html"><span class="dot"></span> Settings</a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main>
+      <div class="topbar">
+        <div class="title">
+          <h2>Risk / Fraud Analysis (AI Layer)</h2>
+          <div class="sub">Assign risk score using mismatch signals + vendor network patterns (demo)</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- Left -->
+        <section class="card col-8">
+          <div class="controls">
+            <div class="field">
+              <label for="period">Return Period</label>
+              <select id="period">
+                <option>Jan 2026</option>
+                <option selected>Feb 2026</option>
+                <option>Mar 2026</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="model">Risk Model</label>
+              <select id="model">
+                <option value="rules" selected>Rules + Heuristics (Hackathon)</option>
+                <option value="ml">ML Classifier (Future)</option>
+                <option value="graph">Graph Risk (Network)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="minScore">Min Risk Score</label>
+              <input id="minScore" type="number" min="0" max="100" value="0" />
+            </div>
+
+            <button class="btn btn-primary" id="runBtn">Run Risk Scoring</button>
+            <button class="btn btn-ghost" id="resetBtn">Reset</button>
+          </div>
+
+          <div class="metrics" id="metrics" style="display:none;">
+            <div class="metric">
+              <div class="label">High Risk Vendors</div>
+              <div class="value" id="mHigh">0</div>
+              <span class="badge high">High</span>
+            </div>
+            <div class="metric">
+              <div class="label">Medium Risk Vendors</div>
+              <div class="value" id="mMed">0</div>
+              <span class="badge med">Medium</span>
+            </div>
+            <div class="metric">
+              <div class="label">Low Risk Vendors</div>
+              <div class="value" id="mLow">0</div>
+              <span class="badge low">Low</span>
+            </div>
+          </div>
+
+          <div class="graphBox" id="graphBox" style="display:none;">
+            <div class="graphHead">
+              <h3>Vendor Network (Knowledge Graph View - Demo)</h3>
+              <div class="legend">
+                <span><i class="dotc low"></i> Low</span>
+                <span><i class="dotc med"></i> Medium</span>
+                <span><i class="dotc high"></i> High</span>
+              </div>
+            </div>
+
+            <div class="nodes" id="nodes"></div>
+
+            <div class="hint">
+              In real system, this section is a graph (nodes: vendors/invoices/returns; edges: SUPPLIED_BY/CLAIMED_BY/REPORTED_IN).
+              For demo, we show “network cards” that behave like graph nodes.
+            </div>
+          </div>
+
+          <table id="alertsTable" style="display:none;" aria-label="Risk alerts table">
+            <thead>
+              <tr>
+                <th style="width:140px;">Risk</th>
+                <th>Vendor GSTIN</th>
+                <th>Key Signal</th>
+                <th style="width:120px;">Score</th>
+                <th style="width:160px;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+
+          <div class="controls" style="margin-top:12px;">
+            <button class="btn btn-warn" id="goReportsBtn">Generate Reports →</button>
+            <button class="btn btn-ghost" id="exportBtn">Export CSV (Demo)</button>
+          </div>
+        </section>
+
+        <!-- Right -->
+        <aside class="card col-4">
+          <div class="hint">
+            <b>Judge Script:</b><br/>
+            “We assign a risk score by combining invoice mismatch evidence with vendor behavior signals.
+            High-risk vendors are detected even when individual invoices look normal.”
+          </div>
+
+          <div class="hint" style="margin-top:12px;">
+            <b>Example scoring logic:</b>
+            <ul style="margin:8px 0 0 18px; padding:0;">
+              <li>Vendor not filing GST → <b>+35</b></li>
+              <li>Repeated missing invoices → <b>+25</b></li>
+              <li>Circular trading pattern → <b>+30</b></li>
+              <li>High ITC claim with low sales → <b>+20</b></li>
+            </ul>
+          </div>
+
+          <div class="controls" style="margin-top:12px;">
+            <button class="btn btn-primary" onclick="window.location.href='reports.html'">Go to Reports</button>
+            <button class="btn btn-ghost" onclick="window.location.href='mismatch.html'">Back to Mismatches</button>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <!-- Drawer -->
+  <div class="drawerBack" id="drawerBack" aria-hidden="true">
+    <div class="drawer" role="dialog" aria-modal="true" aria-label="Vendor risk details">
+      <div class="drawerTop">
+        <h3 id="dTitle">Vendor Details</h3>
+        <button class="xbtn" id="closeBtn">✕</button>
+      </div>
+
+      <div class="kv" id="kv"></div>
+
+      <div class="controls" style="margin-top:12px;">
+        <button class="btn btn-primary" id="createNoticeBtn">Create Notice (Demo)</button>
+        <button class="btn btn-ghost" id="flagBtn">Flag for Investigation</button>
+      </div>
+
+      <div class="hint">
+        For hackathon demo: show that officer actions can be generated from AI risk + evidence trail.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const runBtn = document.getElementById("runBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const minScoreEl = document.getElementById("minScore");
+
+    const metrics = document.getElementById("metrics");
+    const graphBox = document.getElementById("graphBox");
+    const nodesEl = document.getElementById("nodes");
+
+    const alertsTable = document.getElementById("alertsTable");
+    const tbody = document.getElementById("tbody");
+
+    const drawerBack = document.getElementById("drawerBack");
+    const kv = document.getElementById("kv");
+    const dTitle = document.getElementById("dTitle");
+
+    const exportBtn = document.getElementById("exportBtn");
+    const goReportsBtn = document.getElementById("goReportsBtn");
+
+    // Demo vendor risk results
+    const vendors = [
+      {gstin:"19DDDDD3333D1Z7", name:"Vendor E", score:88, risk:"High", signal:"Filing anomalies + ITC spike", network:"Connected to 3 risky vendors", itc:"₹52,000"},
+      {gstin:"29BBBCD1111K1Z2", name:"Vendor A", score:79, risk:"High", signal:"Repeated missing invoices", network:"Linked invoices missing in 2B", itc:"₹16,200"},
+      {gstin:"27AABCU9603R1ZV", name:"Vendor B", score:56, risk:"Medium", signal:"Value mismatches beyond tolerance", network:"Multiple mismatches across periods", itc:"₹8,100"},
+      {gstin:"07CCCCC2222C1Z9", name:"Vendor D", score:48, risk:"Medium", signal:"Missing in purchase register", network:"Transport proof missing (optional)", itc:"₹2,700"},
+      {gstin:"36AAAAA0000A1Z5", name:"Vendor C", score:22, risk:"Low", signal:"Duplicate invoice (isolated)", network:"No suspicious links", itc:"₹4,500"},
+      {gstin:"36ABCDE1234F1Z5", name:"Vendor F", score:12, risk:"Low", signal:"Minor rounding differences", network:"Stable pattern", itc:"₹1,080"},
+    ];
+
+    function pillClass(risk){
+      return risk === "High" ? "high" : (risk === "Medium" ? "med" : "low");
+    }
+    function tag(risk){
+      const cls = pillClass(risk);
+      return `<span class="tag ${cls}">${risk}</span>`;
+    }
+
+    function render(list){
+      // metrics
+      const high = list.filter(v => v.risk === "High").length;
+      const med = list.filter(v => v.risk === "Medium").length;
+      const low = list.filter(v => v.risk === "Low").length;
+
+      document.getElementById("mHigh").textContent = high;
+      document.getElementById("mMed").textContent = med;
+      document.getElementById("mLow").textContent = low;
+
+      metrics.style.display = "grid";
+      graphBox.style.display = "block";
+      alertsTable.style.display = "table";
+
+      // "graph nodes"
+      nodesEl.innerHTML = list.map((v, i) => `
+        <div class="node" onclick="openVendor(${i})">
+          <div class="nodeTop">
+            <div>
+              <h4>${v.name}</h4>
+              <p>${v.gstin}</p>
+            </div>
+            <span class="pill ${pillClass(v.risk)}">${v.risk}</span>
+          </div>
+          <p><b>Score:</b> ${v.score} • <b>ITC:</b> ${v.itc}<br/>
+             <b>Signal:</b> ${v.signal}</p>
+        </div>
+      `).join("");
+
+      // alerts table
+      tbody.innerHTML = list.map((v, i) => `
+        <tr>
+          <td>${tag(v.risk)}</td>
+          <td>${v.gstin}</td>
+          <td>${v.signal}</td>
+          <td><b>${v.score}</b></td>
+          <td>
+            <button class="btn btn-ghost" style="padding:8px 10px; font-size:13px;" onclick="openVendor(${i}); event.stopPropagation();">
+              View Details
+            </button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function openVendor(index){
+      const minScore = Number(minScoreEl.value || 0);
+      const filtered = vendors.filter(v => v.score >= minScore);
+      const v = filtered[index];
+      if (!v) return;
+
+      dTitle.textContent = `${v.name} • Risk ${v.score}`;
+      kv.innerHTML = `
+        <div class="kvRow"><div class="k">GSTIN</div><div class="v">${v.gstin}</div></div>
+        <div class="kvRow"><div class="k">Risk Level</div><div class="v">${v.risk}</div></div>
+        <div class="kvRow"><div class="k">Risk Score</div><div class="v">${v.score}</div></div>
+        <div class="kvRow"><div class="k">Top Signal</div><div class="v">${v.signal}</div></div>
+        <div class="kvRow"><div class="k">Network Note</div><div class="v">${v.network}</div></div>
+        <div class="kvRow"><div class="k">Estimated ITC Exposure</div><div class="v">${v.itc}</div></div>
+      `;
+      drawerBack.style.display = "flex";
+      drawerBack.setAttribute("aria-hidden","false");
+    }
+
+    function closeDrawer(){
+      drawerBack.style.display = "none";
+      drawerBack.setAttribute("aria-hidden","true");
+    }
+
+    function toCSV(list){
+      const header = ["GSTIN","Vendor","Risk","Score","Signal","Network","ITCExposure"];
+      const lines = [header.join(",")];
+      list.forEach(v => {
+        const row = [v.gstin, v.name, v.risk, v.score, v.signal, v.network, v.itc]
+          .map(x => `"${String(x).replaceAll('"','""')}"`).join(",");
+        lines.push(row);
+      });
+      return lines.join("\n");
+    }
+
+    function resetUI(){
+      metrics.style.display = "none";
+      graphBox.style.display = "none";
+      alertsTable.style.display = "none";
+      nodesEl.innerHTML = "";
+      tbody.innerHTML = "";
+    }
+
+    runBtn.addEventListener("click", () => {
+      const minScore = Number(minScoreEl.value || 0);
+      const filtered = vendors.filter(v => v.score >= minScore);
+      render(filtered);
+      alert("✅ Risk scoring completed (demo).");
+    });
+
+    resetBtn.addEventListener("click", () => {
+      minScoreEl.value = 0;
+      resetUI();
+    });
+
+    document.getElementById("closeBtn").addEventListener("click", closeDrawer);
+    drawerBack.addEventListener("click", (e) => { if (e.target === drawerBack) closeDrawer(); });
+
+    document.getElementById("createNoticeBtn").addEventListener("click", () => {
+      alert("📄 Notice draft created (demo). In real system: auto-fill legal notice + evidence.");
+      closeDrawer();
+    });
+    document.getElementById("flagBtn").addEventListener("click", () => {
+      alert("🚩 Flagged for investigation (demo). Added to officer queue.");
+      closeDrawer();
+    });
+
+    exportBtn.addEventListener("click", () => {
+      const minScore = Number(minScoreEl.value || 0);
+      const filtered = vendors.filter(v => v.score >= minScore);
+
+      if (!filtered.length){
+        alert("Run scoring first (or lower min score).");
+        return;
+      }
+      const csv = toCSV(filtered);
+      const blob = new Blob([csv], {type: "text/csv;charset=utf-8;"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "vendor_risk_demo.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    goReportsBtn.addEventListener("click", () => window.location.href = "reports.html");
+
+    // init
+    resetUI();
+  </script>
+</body>
+</html>

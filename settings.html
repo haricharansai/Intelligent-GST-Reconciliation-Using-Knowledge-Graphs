@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings - Intelligent GST Reconciliation Engine</title>
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:#e2e8f0;
+      --blue:#2563eb;
+      --orange:#f97316;
+      --green:#16a34a;
+      --red:#dc2626;
+      --shadow: 0 10px 30px rgba(2, 6, 23, .08);
+      --radius: 14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    /* Layout */
+    .app{ min-height:100vh; display:flex; }
+    aside{
+      width: 260px;
+      background: #0b1220;
+      color: #e5e7eb;
+      padding: 18px 14px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      border-right: 1px solid rgba(255,255,255,.06);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px 16px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .logo{
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--blue), var(--orange));
+    }
+    .brand h1{ margin:0; font-size:14px; line-height:1.1; font-weight:900; }
+    .brand p{ margin:4px 0 0; font-size:12px; color: rgba(229,231,235,.75); }
+
+    nav{ margin-top: 10px; }
+    .nav-item{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      color: rgba(229,231,235,.9);
+      text-decoration:none;
+      font-size: 14px;
+      margin-bottom: 6px;
+      border: 1px solid transparent;
+    }
+    .nav-item:hover{ background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08); }
+    .nav-item.active{ background: rgba(37,99,235,.20); border-color: rgba(37,99,235,.45); }
+    .dot{ width: 10px; height: 10px; border-radius: 999px; background: rgba(255,255,255,.35); }
+    .nav-item.active .dot{ background: var(--blue); }
+
+    main{ flex:1; padding: 22px 22px 60px; }
+
+    /* Topbar */
+    .topbar{
+      display:flex;
+      align-items:flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .title h2{ margin:0; font-size: 20px; }
+    .title .sub{ margin:6px 0 0; color: var(--muted); font-size: 13px; }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .col-7{ grid-column: span 7; }
+    .col-5{ grid-column: span 5; }
+    .col-12{ grid-column: span 12; }
+    @media (max-width: 980px){
+      aside{ width: 230px; }
+      .col-7, .col-5{ grid-column: span 12; }
+      main{ padding: 18px 14px 60px; }
+    }
+
+    /* Form */
+    .groupTitle{
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--text);
+      margin: 0 0 10px;
+    }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 720px){ .row{ grid-template-columns: 1fr; } }
+    .field{ display:flex; flex-direction:column; gap:6px; }
+    label{ font-size: 13px; color: var(--muted); }
+    input, select{
+      width:100%;
+      padding: 10px 12px;
+      border:1px solid var(--border);
+      border-radius: 12px;
+      outline:none;
+      background:#fff;
+      color: var(--text);
+      font-size: 14px;
+    }
+    input:focus, select:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+    }
+
+    .toggleRow{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background:#fff;
+      margin-top: 10px;
+    }
+    .toggleRow .txt{
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 900;
+    }
+    .toggleRow .sub{
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    /* Switch */
+    .switch{
+      position: relative;
+      display:inline-block;
+      width: 50px;
+      height: 28px;
+      flex: 0 0 auto;
+    }
+    .switch input{ display:none; }
+    .slider{
+      position:absolute; cursor:pointer;
+      inset:0;
+      background:#e2e8f0;
+      transition:.2s;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+    .slider:before{
+      content:"";
+      position:absolute;
+      height: 22px; width: 22px;
+      left: 3px; top: 2px;
+      background:#fff;
+      transition:.2s;
+      border-radius: 999px;
+      box-shadow: 0 6px 14px rgba(2,6,23,.10);
+    }
+    input:checked + .slider{
+      background: rgba(37,99,235,.25);
+      border-color: rgba(37,99,235,.45);
+    }
+    input:checked + .slider:before{
+      transform: translateX(22px);
+    }
+
+    /* Buttons */
+    .actions{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border);
+    }
+    .btn{
+      border:0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 900;
+      cursor:pointer;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .btn-primary{ background: var(--blue); color:#fff; }
+    .btn-primary:hover{ filter: brightness(.95); }
+    .btn-ghost{
+      background:#fff;
+      border:1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-ghost:hover{ background:#f8fafc; }
+    .btn-danger{
+      background: var(--red);
+      color:#fff;
+    }
+    .btn-danger:hover{ filter: brightness(.95); }
+
+    /* Right panel */
+    .helpBox{
+      border:1px solid var(--border);
+      border-radius: 14px;
+      background:#fff;
+      padding: 14px;
+    }
+    .helpBox h3{ margin:0 0 8px; font-size: 14px; }
+    .helpBox p{ margin:0; font-size: 12px; color: var(--muted); line-height: 1.55; }
+    .helpBox ul{ margin: 10px 0 0 18px; padding:0; font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+    .toast{
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      background: #0b1220;
+      color: #e5e7eb;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 14px 40px rgba(2,6,23,.18);
+      display:none;
+      max-width: min(360px, 92vw);
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>GST Reconciliation</h1>
+          <p>System Settings</p>
+        </div>
+      </div>
+
+      <nav aria-label="Sidebar Navigation">
+        <a class="nav-item" href="dashboard.html"><span class="dot"></span> Dashboard</a>
+        <a class="nav-item" href="upload.html"><span class="dot"></span> Upload Data</a>
+        <a class="nav-item" href="recon.html"><span class="dot"></span> Reconciliation</a>
+        <a class="nav-item" href="mismatch.html"><span class="dot"></span> Mismatches</a>
+        <a class="nav-item" href="risk.html"><span class="dot"></span> Vendor Risk</a>
+        <a class="nav-item" href="reports.html"><span class="dot"></span> Reports</a>
+        <a class="nav-item active" href="settings.html"><span class="dot"></span> Settings</a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main>
+      <div class="topbar">
+        <div class="title">
+          <h2>Settings</h2>
+          <div class="sub">Configure reconciliation rules, risk scoring, and notifications (demo)</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- Left -->
+        <section class="card col-7">
+          <p class="groupTitle">Reconciliation Preferences</p>
+
+          <div class="row">
+            <div class="field">
+              <label for="tol">Amount Tolerance (₹)</label>
+              <input id="tol" type="number" min="0" value="10" />
+            </div>
+            <div class="field">
+              <label for="mode">Default Match Mode</label>
+              <select id="mode">
+                <option value="standard" selected>Standard (Invoice + GSTIN + Amount)</option>
+                <option value="fuzzy">Fuzzy (Minor diffs allowed)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label for="dateWin">Invoice Date Window (days)</label>
+              <input id="dateWin" type="number" min="0" value="7" />
+            </div>
+            <div class="field">
+              <label for="dupRule">Duplicate Detection</label>
+              <select id="dupRule">
+                <option value="strict" selected>Strict (same invoice no = duplicate)</option>
+                <option value="lenient">Lenient (same invoice + amount)</option>
+              </select>
+            </div>
+          </div>
+
+          <p class="groupTitle" style="margin-top:14px;">Risk / AI Preferences</p>
+
+          <div class="row">
+            <div class="field">
+              <label for="highThr">High Risk Threshold</label>
+              <input id="highThr" type="number" min="0" max="100" value="70" />
+            </div>
+            <div class="field">
+              <label for="medThr">Medium Risk Threshold</label>
+              <input id="medThr" type="number" min="0" max="100" value="40" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label for="model">Risk Model</label>
+              <select id="model">
+                <option value="rules" selected>Rules + Heuristics (Hackathon)</option>
+                <option value="ml">ML Classifier (Future)</option>
+                <option value="graph">Graph Risk (Network)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="riskBoost">Network Risk Boost</label>
+              <select id="riskBoost">
+                <option value="off">Off</option>
+                <option value="low" selected>Low</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+          </div>
+
+          <p class="groupTitle" style="margin-top:14px;">Notifications</p>
+
+          <div class="toggleRow">
+            <div>
+              <div class="txt">Email Alerts</div>
+              <div class="sub">Send alerts for high risk vendors & repeated mismatches</div>
+            </div>
+            <label class="switch">
+              <input id="emailAlerts" type="checkbox" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="toggleRow">
+            <div>
+              <div class="txt">Auto-Generate Reports</div>
+              <div class="sub">After each run, generate ITC mismatch + vendor risk reports</div>
+            </div>
+            <label class="switch">
+              <input id="autoReports" type="checkbox" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="toggleRow">
+            <div>
+              <div class="txt">Save Audit Trail</div>
+              <div class="sub">Log actions for officer / CA review and evidence export</div>
+            </div>
+            <label class="switch">
+              <input id="auditTrail" type="checkbox" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" id="saveBtn">Save Settings</button>
+            <button class="btn btn-ghost" id="resetBtn">Reset</button>
+            <button class="btn btn-danger" id="clearBtn">Clear Demo Data</button>
+          </div>
+        </section>
+
+        <!-- Right -->
+        <aside class="card col-5">
+          <div class="helpBox">
+            <h3>What to tell judges</h3>
+            <p>
+              “Settings show that our system is configurable for different taxpayers, CAs, and officers.
+              Tolerance, match mode, and risk thresholds can be tuned for real deployments.”
+            </p>
+            <ul>
+              <li>Lower tolerance → stricter mismatch detection</li>
+              <li>Higher threshold → fewer vendors marked high risk</li>
+              <li>Audit trail → evidence export for notices</li>
+            </ul>
+          </div>
+
+          <div class="helpBox" style="margin-top:12px;">
+            <h3>Demo behavior</h3>
+            <p>
+              This page stores settings in <b>localStorage</b> only (frontend demo).
+              Your backend can later save these settings per user.
+            </p>
+          </div>
+
+          <div class="actions" style="border-top:none; padding-top:0;">
+            <button class="btn btn-primary" onclick="window.location.href='dashboard.html'">Go to Dashboard</button>
+            <button class="btn btn-ghost" onclick="window.location.href='reports.html'">Go to Reports</button>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    function getToken(){
+      const t = localStorage.getItem('token');
+      if (!t) {
+        alert('Session expired. Please login again.');
+        window.location.href = 'login.html';
+      }
+      return t;
+    }
+
+    const ids = [
+      "tol","mode","dateWin","dupRule",
+      "highThr","medThr","model","riskBoost",
+      "emailAlerts","autoReports","auditTrail"
+    ];
+
+    // Map HTML IDs to API field names
+    const fieldMap = {
+      "tol": "tolerance",
+      "mode": "match_mode",
+      "dateWin": "date_window",
+      "dupRule": "dup_rule",
+      "highThr": "high_threshold",
+      "medThr": "med_threshold",
+      "model": "model",
+      "riskBoost": "risk_boost",
+      "emailAlerts": "email_alerts",
+      "autoReports": "auto_reports",
+      "auditTrail": "audit_trail"
+    };
+
+    function showToast(msg){
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => t.style.display = "none", 2200);
+    }
+
+    function getDefaults(){
+      return {
+        tol: 10,
+        mode: "standard",
+        dateWin: 7,
+        dupRule: "strict",
+        highThr: 70,
+        medThr: 40,
+        model: "rules",
+        riskBoost: "low",
+        emailAlerts: true,
+        autoReports: true,
+        auditTrail: true
+      };
+    }
+
+    function load(){
+      const token = getToken();
+      
+      // Try to fetch from API first
+      fetch('/api/settings', {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      })
+        .then(r => {
+          if (!r.ok) throw new Error('Failed to load settings');
+          return r.json();
+        })
+        .then(data => {
+          // Apply API data to form
+          document.getElementById("tol").value = data.tolerance || 10;
+          document.getElementById("mode").value = data.match_mode || "standard";
+          document.getElementById("dateWin").value = data.date_window || 7;
+          document.getElementById("dupRule").value = data.dup_rule || "strict";
+          document.getElementById("highThr").value = data.high_threshold || 70;
+          document.getElementById("medThr").value = data.med_threshold || 40;
+          document.getElementById("model").value = data.model || "rules";
+          document.getElementById("riskBoost").value = data.risk_boost || "low";
+          document.getElementById("emailAlerts").checked = data.email_alerts !== false;
+          document.getElementById("autoReports").checked = data.auto_reports !== false;
+          document.getElementById("auditTrail").checked = data.audit_trail !== false;
+        })
+        .catch(err => {
+          console.log('Using local defaults:', err);
+          const saved = JSON.parse(localStorage.getItem("gst_settings") || "null");
+          const s = saved || getDefaults();
+          ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (el.type === "checkbox") el.checked = !!s[id];
+            else el.value = s[id];
+          });
+        });
+    }
+
+    function save(){
+      const token = getToken();
+      const payload = {
+        tolerance: Number(document.getElementById("tol").value),
+        match_mode: document.getElementById("mode").value,
+        date_window: Number(document.getElementById("dateWin").value),
+        dup_rule: document.getElementById("dupRule").value,
+        high_threshold: Number(document.getElementById("highThr").value),
+        med_threshold: Number(document.getElementById("medThr").value),
+        model: document.getElementById("model").value,
+        risk_boost: document.getElementById("riskBoost").value,
+        email_alerts: document.getElementById("emailAlerts").checked,
+        auto_reports: document.getElementById("autoReports").checked,
+        audit_trail: document.getElementById("auditTrail").checked
+      };
+
+      // Check med < high
+      if (payload.med_threshold >= payload.high_threshold){
+        showToast("⚠️ Medium threshold should be less than High threshold.");
+        return;
+      }
+
+      // Save to backend
+      fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify(payload)
+      })
+        .then(r => r.json())
+        .then(data => {
+          showToast("✅ Settings saved.");
+          localStorage.setItem("gst_settings", JSON.stringify(payload));
+        })
+        .catch(err => {
+          showToast("⚠️ Save failed, using local storage.");
+          localStorage.setItem("gst_settings", JSON.stringify(payload));
+        });
+    }
+
+    function resetToDefaults(){
+      const d = getDefaults();
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.type === "checkbox") el.checked = !!d[id];
+        else el.value = d[id];
+      });
+      showToast("↩️ Reset to defaults.");
+    }
+
+    function clearDemoData(){
+      localStorage.removeItem("gst_settings");
+      localStorage.removeItem("gst_uploads");
+      localStorage.removeItem("gst_recon");
+      localStorage.removeItem("gst_mismatches");
+      localStorage.removeItem("gst_risk");
+      showToast("🧹 Demo data cleared.");
+      resetToDefaults();
+    }
+
+    document.getElementById("saveBtn").addEventListener("click", save);
+    document.getElementById("resetBtn").addEventListener("click", resetToDefaults);
+    document.getElementById("clearBtn").addEventListener("click", clearDemoData);
+
+    // init
+    load();
+  </script>
+</body>
+</html>
